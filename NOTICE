@@ -1,0 +1,19 @@
+Bootshift
+Copyright 2026 Hsan Jebri
+
+This product's own source code is licensed under the Apache License, Version 2.0.
+See the LICENSE file.
+
+Bootshift does NOT include or redistribute OpenRewrite recipes.
+
+At run time, inside each user's own build sandbox, the OpenRewrite Maven plugin
+resolves recipe artifacts such as org.openrewrite.recipe:rewrite-spring from a
+Maven repository. Several of those recipes, including the Spring Boot migration
+recipes, are published under the Moderne Source Available License, which has
+its own terms and restrictions, including limits on commercialization and on
+offering the recipes as a managed service. Those terms are separate from this
+project's license. You are responsible for complying with them.
+
+See:
+  https://docs.openrewrite.org/licensing/openrewrite-licensing
+  https://docs.moderne.io/licensing/moderne-source-available-license

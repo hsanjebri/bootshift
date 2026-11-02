@@ -1,0 +1,35 @@
+# Build output
+target/
+build/
+out/
+*.class
+*.log
+
+# Phase 0 / eval run output (logs are large and reproducible)
+evals/results/*
+!evals/results/.gitkeep
+work/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.classpath
+.project
+.settings/
+
+# Node / Angular
+node_modules/
+dist/
+.angular/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Secrets: never commit
+.env
+*.pem
+*.key
+deploy/.env
