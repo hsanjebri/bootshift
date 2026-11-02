@@ -1,0 +1,247 @@
+# Bootshift migration playbook: Spring Boot 3.5 -> 4.x
+#
+# Each entry maps a failure signal to a likely fix. The repair agent receives matching
+# entries as hints; they are never applied automatically.
+#
+# status:
+#   confirmed  - checked against official docs AND/OR the real 4.1.2 jars (javap), 2026-11-02
+#   changed    - README seed entry was wrong or incomplete; corrected here
+#   unverified - plausible, not yet checked; do not trust until a fixture or doc confirms it
+#   new        - not in the README seed; found in Phase 0
+#
+# recipe: does rewrite-spring 6.37.1 already handle this? (observed in Phase 0 fixtures)
+#   yes | no | partial | unknown
+#
+# Sources:
+#   boot-guide = https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-4.0-Migration-Guide
+#   sec7       = https://docs.spring.io/spring-security/reference/migration-7/web.html
+#   jar        = javap against the artifact resolved by Boot 4.1.2 (spring-web 7.0.10,
+#                spring-security-web 7.0.8, jackson-databind 3.1.7)
+#   fixture    = observed in fixtures/<name> during Phase 0 (docs/phase-0.md)
+
+entries:
+  - id: resttemplatebuilder-moved
+    signal: "cannot find symbol.*RestTemplateBuilder|package org.springframework.boot.web.client does not exist"
+    fix: >-
+      Add org.springframework.boot:spring-boot-starter-restclient and import
+      org.springframework.boot.restclient.RestTemplateBuilder.
+    status: confirmed
+    recipe: yes
+    source: [boot-guide, fixture/rest-clients]
+
+  - id: webclient-builder-bean-missing
+    signal: "No qualifying bean of type 'org.springframework.web.reactive.function.client.WebClient\\$Builder'"
+    fix: >-
+      Add org.springframework.boot:spring-boot-starter-webclient. spring-boot-starter-webflux
+      alone no longer auto-configures WebClient.Builder.
+    status: confirmed
+    recipe: no   # recipes kept starter-webflux; context failed at startup
+    source: [boot-guide, fixture/rest-clients]
+
+  - id: testresttemplate-moved
+    signal: "TestRestTemplate|No qualifying bean of type '.*TestRestTemplate'"
+    fix: >-
+      Add test dependency org.springframework.boot:spring-boot-resttestclient, import
+      org.springframework.boot.resttestclient.TestRestTemplate, and annotate the test class with
+      @AutoConfigureTestRestTemplate (org.springframework.boot.resttestclient.autoconfigure).
+      Alternative: RestTestClient with @AutoConfigureRestTestClient.
+    status: confirmed
+    recipe: yes
+    source: [boot-guide, fixture/rest-clients]
+
+  - id: restclienttest-moved
+    signal: "package org.springframework.boot.test.autoconfigure.web.client does not exist"
+    fix: >-
+      Add spring-boot-starter-restclient-test and import
+      org.springframework.boot.restclient.test.autoconfigure.RestClientTest.
+    status: new
+    recipe: yes
+    source: [fixture/rest-clients]
+
+  - id: webmvctest-mockmvc-moved
+    signal: "package org.springframework.boot.test.autoconfigure.web.servlet does not exist"
+    fix: >-
+      Add spring-boot-starter-webmvc-test (test scope) and import @WebMvcTest / @AutoConfigureMockMvc
+      from org.springframework.boot.webmvc.test.autoconfigure.
+    status: confirmed
+    recipe: yes
+    source: [boot-guide, fixture/simple-web, fixture/security-chain]
+
+  - id: springboottest-no-mockmvc
+    signal: "No qualifying bean of type 'org.springframework.test.web.servlet.MockMvc'"
+    fix: "@SpringBootTest no longer provides MockMvc. Add @AutoConfigureMockMvc."
+    status: new
+    recipe: unknown
+    source: [boot-guide]
+
+  - id: mockbean-removed
+    signal: "cannot find symbol.*(MockBean|SpyBean)|package org.springframework.boot.test.mock.mockito does not exist"
+    fix: >-
+      Use @MockitoBean / @MockitoSpyBean from org.springframework.test.context.bean.override.mockito.
+      They work on test-class fields but not inside @Configuration classes.
+    status: new
+    recipe: yes
+    source: [boot-guide, fixture/simple-web]
+
+  - id: antpathrequestmatcher-removed
+    signal: "cannot find symbol.*AntPathRequestMatcher"
+    fix: >-
+      Use PathPatternRequestMatcher.pathPattern("/path/**") (or plain string patterns in
+      requestMatchers). PathPatternRequestMatcher does not support ** in the middle of a pattern,
+      e.g. /a/**/b.js; flag such patterns for review.
+    status: confirmed
+    recipe: no
+    source: [sec7, jar, fixture/security-chain]
+
+  - id: mvcrequestmatcher-removed
+    signal: "cannot find symbol.*MvcRequestMatcher|package MvcRequestMatcher does not exist"
+    fix: >-
+      Remove MvcRequestMatcher.Builder and the HandlerMappingIntrospector parameter; use plain string
+      patterns in requestMatchers(...) or PathPatternRequestMatcher.pathPattern(...).
+    status: confirmed
+    recipe: no
+    source: [sec7, jar, fixture/security-chain]
+
+  - id: csrf-non-lambda
+    signal: "method csrf in class HttpSecurity cannot be applied to given types"
+    fix: "Use http.csrf(csrf -> csrf.disable()) or another lambda customizer."
+    status: confirmed
+    recipe: yes
+    source: [fixture/security-chain]
+
+  - id: httpheaders-not-multivaluemap
+    signal: "HttpHeaders cannot be converted to .*MultiValueMap"
+    fix: "HttpHeaders no longer implements MultiValueMap. Copy into a LinkedMultiValueMap, or use HttpHeaders methods directly."
+    status: confirmed
+    recipe: unknown
+    source: [jar]
+
+  - id: unprocessable-entity
+    signal: "UNPROCESSABLE_ENTITY|UnprocessableEntity"
+    fix: >-
+      Prefer HttpStatus.UNPROCESSABLE_CONTENT. Note: UNPROCESSABLE_ENTITY still exists in
+      spring-web 7.0.10 but is @Deprecated, so this is a warning, not a compile error.
+    status: changed   # README said "not found"; it is deprecated, not removed
+    recipe: no
+    source: [jar]
+
+  - id: getrawstatuscode-removed
+    signal: "cannot find symbol.*getRawStatusCode"
+    fix: "Use getStatusCode().value()."
+    status: confirmed
+    recipe: yes
+    source: [jar, fixture/rest-clients]
+
+  - id: fromhttpurl-removed
+    signal: "cannot find symbol.*fromHttpUrl"
+    fix: "Use UriComponentsBuilder.fromUriString(...)."
+    status: confirmed
+    recipe: yes
+    source: [jar, fixture/rest-clients]
+
+  - id: entityscan-moved
+    signal: "cannot find symbol.*EntityScan|package org.springframework.boot.autoconfigure.domain does not exist"
+    fix: "Import org.springframework.boot.persistence.autoconfigure.EntityScan."
+    status: confirmed
+    recipe: unknown
+    source: [boot-guide]
+
+  - id: flyway-starter
+    signal: "Flyway|Schema-validation"
+    fix: "Replace org.flywaydb:flyway-core with spring-boot-starter-flyway (Flyway auto-configuration moved to spring-boot-flyway)."
+    status: confirmed
+    recipe: unknown   # recipe AddSpringBootStarterFlyway exists in rewrite-spring 6.37.1
+    source: [boot-guide]
+
+  - id: jackson2-customizer
+    signal: "cannot find symbol.*Jackson2ObjectMapperBuilderCustomizer"
+    fix: >-
+      Use JsonMapperBuilderCustomizer with tools.jackson.databind.json.JsonMapper.Builder.
+      Also renamed: @JsonComponent -> @JacksonComponent, @JsonMixin -> @JacksonMixin,
+      JsonObjectSerializer -> ObjectValueSerializer. Define a JsonMapper bean, not ObjectMapper.
+    status: confirmed
+    recipe: unknown
+    source: [boot-guide]
+
+  - id: jackson-properties-renamed
+    signal: "spring.jackson.(read|write|parser)\\."
+    fix: "Rename spring.jackson.read.* / write.* to spring.jackson.json.read.* / json.write.*."
+    status: new
+    recipe: unknown   # SpringBootProperties_4_0 likely covers it; confirm with a fixture
+    source: [boot-guide]
+
+  - id: jackson3-null-for-primitives
+    signal: "Cannot map `null` into type `(boolean|int|long|double|float|short|byte|char)`"
+    fix: >-
+      Jackson 3 enables FAIL_ON_NULL_FOR_PRIMITIVES by default, so a JSON body missing a primitive
+      field now returns 400. To keep Boot 3 behaviour without changing the API contract, set
+      spring.jackson.deserialization.fail-on-null-for-primitives=false (or
+      spring.jackson.use-jackson2-defaults=true). Do NOT "fix" this by editing the test request,
+      which hides a breaking change for API clients. Always add to "Review by hand".
+    status: new
+    recipe: no
+    source: [fixture/simple-web]
+
+  - id: jackson-date-deserializers
+    signal: "cannot find symbol.*DateDeserializers"
+    fix: "Move to a Jackson 3 JsonMapper builder and remove old date config if defaults suit."
+    status: unverified
+    recipe: unknown
+    source: []
+
+  - id: lombok-jacksonized
+    signal: "@Jacksonized"
+    fix: "Add 'lombok.jacksonized.jacksonVersion += 3' to lombok.config."
+    status: unverified
+    recipe: unknown
+    source: []
+
+  - id: testcontainers-2-artifacts
+    signal: "Could not find artifact org.testcontainers:"
+    fix: "Testcontainers 2 renames modules to testcontainers-* (e.g. testcontainers-postgresql)."
+    status: unverified   # not covered by the Boot guide; the Testcontainers2Migration recipe exists
+    recipe: unknown
+    source: []
+
+  - id: testcontainers-withlocalcompose
+    signal: "cannot find symbol.*withLocalCompose"
+    fix: "Remove the call."
+    status: unverified
+    recipe: unknown
+    source: []
+
+  - id: spock-groovy
+    signal: "spock|groovy"
+    fix: >-
+      Spring Boot 4 dropped its Spock integration and dependency management. Pin Spock yourself to a
+      Groovy 5 build (2.4-groovy-5.0 or later exists on Maven Central) and align the Groovy version.
+    status: changed   # README implied Boot still manages it
+    recipe: unknown
+    source: [boot-guide]
+
+  - id: mongo-properties
+    signal: "spring.data.mongodb."
+    fix: >-
+      Rename connection properties (host, port, uri, database, username, password, ...) from
+      spring.data.mongodb.* to spring.mongodb.*. Keep auto-index-creation, field-naming-strategy,
+      gridfs.*, repositories.type under spring.data.mongodb. UUID representation must be set explicitly.
+    status: changed   # README said rename all spring.data.mongodb.*; only some move
+    recipe: unknown
+    source: [boot-guide]
+
+  - id: undertow-removed
+    signal: "spring-boot-starter-undertow|undertow"
+    fix: "Undertow is not supported in Boot 4 (Servlet 6.1 baseline). Switch to Tomcat or Jetty and flag for review."
+    status: confirmed
+    recipe: unknown
+    source: [boot-guide]
+
+  - id: starter-web-renamed
+    signal: "spring-boot-starter-web\\b"
+    fix: >-
+      spring-boot-starter-web is deprecated in favour of spring-boot-starter-webmvc. Other renames:
+      starter-web-services -> starter-webservices, starter-oauth2-* -> starter-security-oauth2-*,
+      starter-aop -> starter-aspectj.
+    status: new
+    recipe: yes
+    source: [boot-guide, fixture/simple-web]
