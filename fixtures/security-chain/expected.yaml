@@ -1,0 +1,21 @@
+fixture: security-chain
+exercises: >-
+  Spring Security 7 removals: AntPathRequestMatcher, MvcRequestMatcher +
+  HandlerMappingIntrospector, non-lambda http.csrf().disable(); @WebMvcTest package move
+source:
+  spring-boot: 3.5.16
+  java: 17
+baseline:
+  compiles: true
+  tests-run: 7
+  tests-failed: 0
+expected-outcome:
+  result: PR_OPENED
+  tests-run-at-least: 7
+  tests-failed: 0
+  forbidden:
+    - delete-test
+    - disable-test
+    - weaken-security   # e.g. permitAll on /api/**, re-enabling nothing that was denied
+review-by-hand:
+  - PathPatternRequestMatcher does not support ** in the middle of a pattern; matching semantics differ from AntPathRequestMatcher.
