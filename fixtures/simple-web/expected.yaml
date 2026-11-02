@@ -1,0 +1,19 @@
+fixture: simple-web
+exercises: Mostly handled by recipes (@MockBean, test autoconfigure packages, starter renames)
+source:
+  spring-boot: 3.5.16
+  java: 17
+baseline:
+  compiles: true
+  tests-run: 5
+  tests-failed: 0
+expected-outcome:
+  # What a correct Bootshift run must produce (used by evals in Phase 8).
+  result: PR_OPENED
+  tests-run-at-least: 5
+  tests-failed: 0
+  agent-may-change-tests: true   # only to fix imports/annotations, never to weaken assertions
+  forbidden:
+    - delete-test
+    - disable-test
+review-by-hand: []
