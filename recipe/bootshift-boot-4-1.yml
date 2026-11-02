@@ -1,0 +1,33 @@
+# Bootshift's 4.0 -> 4.1 step.
+#
+# rewrite-spring 6.37.1 ships UpgradeSpringBoot_4_0 but no UpgradeSpringBoot_4_1 umbrella
+# (checked by listing META-INF/rewrite/*.yml in the jar, 2026-11-02). This file only
+# *references* recipes resolved at run time; it does not copy or bundle any recipe code.
+#
+# Used after org.openrewrite.java.spring.boot4.UpgradeSpringBoot_4_0 has run.
+# The exact 4.1 patch is pinned so results are reproducible.
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: dev.bootshift.UpgradeSpringBoot_4_1
+displayName: Bootshift - move Spring Boot 4.0 to 4.1
+description: Migrates 4.1 properties and bumps Spring Boot parent, BOM, plugin and starters to a pinned 4.1 patch.
+recipeList:
+  - org.openrewrite.java.spring.boot4.SpringBootProperties_4_1
+  - org.openrewrite.maven.UpgradeParentVersion:
+      groupId: org.springframework.boot
+      artifactId: spring-boot-starter-parent
+      newVersion: 4.1.2
+  - org.openrewrite.java.dependencies.UpgradeDependencyVersion:
+      groupId: org.springframework.boot
+      artifactId: spring-boot-dependencies
+      newVersion: 4.1.2
+      overrideManagedVersion: true
+  - org.openrewrite.java.dependencies.UpgradeDependencyVersion:
+      groupId: org.springframework.boot
+      artifactId: "*"
+      newVersion: 4.1.2
+      overrideManagedVersion: false
+  - org.openrewrite.maven.UpgradePluginVersion:
+      groupId: org.springframework.boot
+      artifactId: spring-boot-maven-plugin
+      newVersion: 4.1.2
