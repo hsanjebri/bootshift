@@ -62,6 +62,9 @@ class RunEventsController {
         try {
             while (open.get()) {
                 long seen = signal.version();
+                // Read the status before the events: a terminal status is committed together with
+                // its final event, so if the run was already finished, that event is in this batch.
+                boolean finishedBefore = runs.get(id).status().isTerminal();
                 List<RunEvent> batch = runs.events(id, last, BATCH);
                 for (RunEvent event : batch) {
                     emitter.send(SseEmitter.event()
@@ -76,6 +79,11 @@ class RunEventsController {
                 }
                 if (batch.size() == BATCH) {
                     continue;
+                }
+                if (finishedBefore) {
+                    // A reconnect after the final event (EventSource retries automatically): nothing more will come.
+                    emitter.complete();
+                    return;
                 }
                 if (!signal.awaitChange(seen, HEARTBEAT)) {
                     emitter.send(SseEmitter.event().comment("keep-alive"));

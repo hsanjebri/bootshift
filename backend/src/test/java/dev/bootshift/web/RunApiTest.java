@@ -92,6 +92,17 @@ class RunApiTest {
     }
 
     @Test
+    void reconnectingAfterTheFinalEventClosesImmediately() {
+        Run run = start("hsanjebri/reconnect");
+        SseEvents all = SseEvents.parse(events(run.id(), null), json);
+        long finalId = all.events().getLast().id();
+
+        SseEvents afterEnd = SseEvents.parse(events(run.id(), finalId), json);
+
+        assertThat(afterEnd.events()).isEmpty();
+    }
+
+    @Test
     void sameIdempotencyKeyReturnsTheSameRun() {
         String key = UUID.randomUUID().toString();
         Run first = startWithKey("hsanjebri/idem", key);
@@ -204,7 +215,7 @@ class RunApiTest {
         String body = request.exchange()
                 .expectStatus().isOk()
                 .expectBody(String.class).returnResult().getResponseBody();
-        assertThat(body).isNotNull();
-        return body;
+        return body == null ? "" : body; // an immediately closed stream has an empty body
+
     }
 }
