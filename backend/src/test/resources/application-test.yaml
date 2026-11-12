@@ -1,0 +1,13 @@
+# Integration tests use a Testcontainers Postgres (see TestDatabase). To run them against an
+# existing database instead (e.g. without Docker), set BOOTSHIFT_TEST_DB_URL, _USER and _PASSWORD.
+spring:
+  datasource:
+    url: ${BOOTSHIFT_TEST_DB_URL:jdbc:postgresql://localhost:5432/bootshift}
+    username: ${BOOTSHIFT_TEST_DB_USER:bootshift}
+    password: ${BOOTSHIFT_TEST_DB_PASSWORD:bootshift}
+
+bootshift:
+  runs:
+    poll-interval: 50ms
+  pipeline:
+    fake-step-delay: 0ms
