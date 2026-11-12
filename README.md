@@ -111,7 +111,7 @@ This section is an engineering reading of the license, not legal advice.
 | Runtime | Java 25 (LTS) | Avoids a short-lived release. No preview features |
 | Backend | Spring Boot 4.1.x | Current stable line. Revisit when Spring AI documents 4.2 support |
 | AI | Spring AI 2.0.x | Advisor-based tool loop, MCP support, structured output |
-| Model | Anthropic by default, configurable | Provider and model set through config, never hardcoded |
+| Model | Google Gemini by default, xAI Grok as the second provider, configurable | Provider and model set through config, never hardcoded. Gemini uses `spring-ai-starter-model-google-genai` (Gemini Developer API key). Grok has no dedicated Spring AI starter, so it uses `spring-ai-starter-model-openai` pointed at xAI's OpenAI-compatible API. Evals compare both |
 | MCP | `spring-ai-starter-mcp-server-webmvc` | `@McpTool` over Streamable HTTP |
 | Frontend | Angular 22 | Stable Signal Forms, `httpResource`, OnPush by default |
 | Database | PostgreSQL + Flyway | Stores runs and also acts as the job queue |
@@ -581,7 +581,7 @@ Use gVisor (`--runtime=runsc`) in production if the host supports it.
 
 ### Data handling
 
-Source code is sent to the configured model provider. State this in the README, and let users pick a provider that suits them, including local models through Ollama. Log retention is configurable, and working copies are deleted when a run ends.
+Source code is sent to the configured model provider (Google for Gemini, xAI for Grok). State this in the README, and let users pick a provider that suits them. Free API tiers may allow the provider to use submitted data for training, so check the provider's terms before running Bootshift on private code. Local models through Ollama remain a possible later addition. Log retention is configurable, and working copies are deleted when a run ends.
 
 ## 14. Testing and evals
 
@@ -744,7 +744,7 @@ bootshift:
     rewrite-plugin-version: "<pinned>"
     rewrite-spring-version: "<pinned>"
   agent:
-    provider: anthropic                # Also openai, ollama
+    provider: gemini                   # gemini | grok (Ollama is a possible later addition)
     model: ${BOOTSHIFT_MODEL}
     max-iterations: 8
     max-tools-per-iteration: 40
