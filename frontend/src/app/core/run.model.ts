@@ -74,6 +74,26 @@ export function isTerminal(state: RunState): boolean {
   return TERMINAL_STATES.has(state);
 }
 
+export type Tone = 'live' | 'neutral' | 'success' | 'warning' | 'danger';
+
+/** Colour family for a state. Green, amber and red are reserved for results. */
+export function toneOf(state: RunState): Tone {
+  switch (state) {
+    case 'PR_OPENED':
+      return 'success';
+    case 'DRAFT':
+      return 'warning';
+    case 'FAILED':
+    case 'NOT_ELIGIBLE':
+      return 'danger';
+    case 'CANCELLED':
+    case 'QUEUED':
+      return 'neutral';
+    default:
+      return 'live';
+  }
+}
+
 export function stateLabel(state: RunState): string {
   return RESULT_LABELS[state] ?? STAGE_LABELS[state as Stage] ?? state;
 }

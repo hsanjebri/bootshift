@@ -17,6 +17,17 @@ export interface Timeline {
   result: RunState | null;
 }
 
+/**
+ * How far along a run is, from 0 to 1, for progress bars. Uses the current state, or for a
+ * finished run that did not succeed, the last stage it reached.
+ */
+export function progressOf(status: RunState, stage: RunState | null): number {
+  if (status === 'PR_OPENED' || status === 'DRAFT') return 1;
+  const reached = isTerminal(status) ? stage : status;
+  const index = reached ? (STAGES as readonly string[]).indexOf(reached) : -1;
+  return index < 0 ? 0 : (index + 1) / (STAGES.length + 1);
+}
+
 /** Builds the stage timeline from the STATE_CHANGED events of one run. Pure, so it is easy to test. */
 export function buildTimeline(events: readonly RunEvent[]): Timeline {
   const visits = new Map<Stage, number>();
