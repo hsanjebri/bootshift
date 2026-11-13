@@ -1,0 +1,40 @@
+# Local development services. The backend and frontend run on the host (see docs/development.md).
+#
+#   docker compose -f deploy/compose.dev.yaml up -d                          # Postgres only
+#   docker compose -f deploy/compose.dev.yaml --profile observability up -d  # + Grafana LGTM
+#
+# Credentials here are local-only defaults and match backend/src/main/resources/application.yaml.
+name: bootshift-dev
+
+services:
+  postgres:
+    image: postgres:18.6
+    environment:
+      POSTGRES_DB: bootshift
+      POSTGRES_USER: bootshift
+      POSTGRES_PASSWORD: bootshift
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      # Postgres 18 images keep data under /var/lib/postgresql/18/docker, so mount the parent.
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bootshift -d bootshift"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # Traces, metrics and logs in one container: Grafana on :3000, OTLP on :4317/:4318.
+  # Point the backend at it with:
+  #   MANAGEMENT_OPENTELEMETRY_TRACING_EXPORT_OTLP_ENDPOINT=http://localhost:4318/v1/traces
+  #   BOOTSHIFT_OTEL_METRICS_ENABLED=true
+  lgtm:
+    image: grafana/otel-lgtm:0.40.0
+    profiles: ["observability"]
+    ports:
+      - "127.0.0.1:3000:3000"
+      - "127.0.0.1:4317:4317"
+      - "127.0.0.1:4318:4318"
+
+volumes:
+  postgres-data:
