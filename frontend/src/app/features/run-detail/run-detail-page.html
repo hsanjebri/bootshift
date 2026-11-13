@@ -1,0 +1,61 @@
+<a routerLink="/" class="back">← All runs</a>
+
+@if (run.error()) {
+  <section class="card">
+    <p class="error" role="alert">Run not found.</p>
+  </section>
+} @else {
+  <section class="card" aria-labelledby="run-title">
+    <div class="card-head">
+      <div>
+        <h2 id="run-title" class="mono">{{ run.value()?.repository ?? '…' }}</h2>
+        <p class="muted meta">
+          Spring Boot 3.5 → 4.1
+          @if (run.value()?.branch; as branch) { · base <span class="mono">{{ branch }}</span> }
+          @if (run.value()?.createdAt; as created) { · started {{ created | date: 'medium' }} }
+        </p>
+      </div>
+      <div class="actions">
+        @if (state(); as s) {
+          <span class="status" [attr.data-state]="s" [class.live]="canCancel()">{{ stateLabel(s) }}</span>
+        }
+        @if (canCancel()) {
+          <button type="button" class="ghost danger" (click)="cancel()" [disabled]="cancelling()">Cancel</button>
+        }
+      </div>
+    </div>
+
+    <ol class="timeline" aria-label="Stages">
+      @for (step of timeline().steps; track step.stage) {
+        <li [attr.data-status]="step.status" [attr.aria-current]="step.status === 'active' ? 'step' : null">
+          <span class="dot" aria-hidden="true"></span>
+          <span class="label">{{ stageLabels[step.stage] }}</span>
+          @if (step.visits > 1) {
+            <span class="visits" [attr.aria-label]="step.visits + ' times'">×{{ step.visits }}</span>
+          }
+        </li>
+      }
+    </ol>
+
+    @if (run.value()?.failureReason; as reason) {
+      <p class="error" role="alert">{{ reason }}</p>
+    }
+  </section>
+
+  <section class="card" aria-labelledby="log-title">
+    <div class="card-head">
+      <h2 id="log-title">Events</h2>
+      <span class="muted connection" aria-live="polite">{{ stream()?.connection() }}</span>
+    </div>
+    <ol class="log mono" aria-live="polite">
+      @for (event of logs(); track event.id) {
+        <li>
+          <time class="muted">{{ event.createdAt | date: 'HH:mm:ss' }}</time>
+          <span>{{ message(event.payload) }}</span>
+        </li>
+      } @empty {
+        <li class="muted">Waiting for events…</li>
+      }
+    </ol>
+  </section>
+}

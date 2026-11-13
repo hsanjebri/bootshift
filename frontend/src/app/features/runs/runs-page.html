@@ -1,0 +1,69 @@
+<section class="card new-run" aria-labelledby="new-run-title">
+  <h2 id="new-run-title">New run</h2>
+  <p class="hint">Phase 1 runs are simulated: no clone, build or model call happens.</p>
+
+  <form (submit)="start($event)" novalidate>
+    <div class="fields">
+      <label class="field">
+        <span>Repository</span>
+        <input type="text" placeholder="owner/name" autocomplete="off" spellcheck="false"
+               [formField]="newRun.repository" />
+        @if (newRun.repository().touched() && newRun.repository().invalid()) {
+          <span class="error" role="alert">{{ newRun.repository().errors()[0].message }}</span>
+        }
+      </label>
+
+      <label class="field">
+        <span>Base branch <em>(optional)</em></span>
+        <input type="text" placeholder="default branch" autocomplete="off" spellcheck="false"
+               [formField]="newRun.branch" />
+        @if (newRun.branch().touched() && newRun.branch().invalid()) {
+          <span class="error" role="alert">{{ newRun.branch().errors()[0].message }}</span>
+        }
+      </label>
+
+      <button type="submit" class="primary" [disabled]="newRun().submitting()">
+        {{ newRun().submitting() ? 'Starting…' : 'Start run' }}
+      </button>
+    </div>
+    @if (submitError(); as message) {
+      <p class="error" role="alert">{{ message }}</p>
+    }
+  </form>
+</section>
+
+<section class="card" aria-labelledby="runs-title">
+  <div class="card-head">
+    <h2 id="runs-title">Runs</h2>
+    <button type="button" class="ghost" (click)="runs.reload()">Refresh</button>
+  </div>
+
+  @if (runs.error()) {
+    <p class="error" role="alert">Could not load runs. Is the backend running?</p>
+  } @else if (runs.value().length === 0 && !runs.isLoading()) {
+    <p class="empty">No runs yet. Start one above.</p>
+  } @else {
+    <table>
+      <thead>
+        <tr>
+          <th scope="col">Repository</th>
+          <th scope="col">Status</th>
+          <th scope="col">Created</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (run of runs.value(); track run.id) {
+          <tr>
+            <td><a [routerLink]="['/runs', run.id]" class="mono">{{ run.repository }}</a></td>
+            <td>
+              <span class="status" [attr.data-state]="run.status" [class.live]="!isTerminal(run.status)">
+                {{ stateLabel(run.status) }}
+              </span>
+            </td>
+            <td class="muted">{{ run.createdAt | date: 'medium' }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</section>
