@@ -47,7 +47,7 @@ describe('RunsPage', () => {
   it('lists runs from the API', async () => {
     const fixture = await render([RUN]);
 
-    const row = (fixture.nativeElement as HTMLElement).querySelector('tbody tr');
+    const row = (fixture.nativeElement as HTMLElement).querySelector('.run-row');
     expect(row?.textContent).toContain('hsanjebri/demo-app');
     expect(row?.textContent).toContain('PR opened');
   });

@@ -1,38 +1,76 @@
-<a routerLink="/" class="back">← All runs</a>
+<a routerLink="/" class="back">
+  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 6-6 6 6 6" /></svg>
+  All runs
+</a>
 
 @if (run.error()) {
-  <section class="card">
-    <p class="error" role="alert">Run not found.</p>
+  <section class="card empty" role="alert">
+    <strong>Run not found</strong>
+    <span class="muted">It may have been removed, or the link is wrong.</span>
   </section>
 } @else {
-  <section class="card" aria-labelledby="run-title">
-    <div class="card-head">
+  <header class="head">
+    <div class="title">
+      <span class="avatar mono" aria-hidden="true">{{ (run.value()?.repository ?? '?').charAt(0).toUpperCase() }}</span>
       <div>
-        <h2 id="run-title" class="mono">{{ run.value()?.repository ?? '…' }}</h2>
+        <h1 class="mono">{{ run.value()?.repository ?? '…' }}</h1>
         <p class="muted meta">
-          Spring Boot 3.5 → 4.1
-          @if (run.value()?.branch; as branch) { · base <span class="mono">{{ branch }}</span> }
-          @if (run.value()?.createdAt; as created) { · started {{ created | date: 'medium' }} }
+          Spring Boot 3.5 → 4.1 · base <span class="mono">{{ run.value()?.branch ?? 'default branch' }}</span>
         </p>
       </div>
-      <div class="actions">
-        @if (state(); as s) {
-          <span class="status" [attr.data-state]="s" [class.live]="canCancel()">{{ stateLabel(s) }}</span>
-        }
-        @if (canCancel()) {
-          <button type="button" class="ghost danger" (click)="cancel()" [disabled]="cancelling()">Cancel</button>
-        }
+    </div>
+    <div class="actions">
+      <div class="elapsed" [class.live]="!finished()">
+        <span class="eyebrow">{{ finished() ? 'Took' : 'Elapsed' }}</span>
+        <span class="mono">{{ duration() }}</span>
       </div>
+      @if (state(); as s) {
+        <bs-status-badge [state]="s" />
+      }
+      @if (canCancel()) {
+        <button type="button" class="ghost danger" (click)="cancel()" [disabled]="cancelling()">
+          {{ cancelling() ? 'Cancelling…' : 'Cancel' }}
+        </button>
+      }
+    </div>
+  </header>
+
+  <section class="card pipeline" aria-labelledby="pipeline-title">
+    <div class="card-head">
+      <h2 id="pipeline-title">Pipeline</h2>
+      <span class="muted pct mono">{{ (progress() * 100).toFixed(0) }}%</span>
+    </div>
+    <div class="bar big" [attr.data-tone]="tone()" role="progressbar" aria-label="Run progress"
+         [attr.aria-valuenow]="(progress() * 100).toFixed(0)" aria-valuemin="0" aria-valuemax="100">
+      <span [style.width.%]="progress() * 100"></span>
     </div>
 
-    <ol class="timeline" aria-label="Stages">
-      @for (step of timeline().steps; track step.stage) {
+    <ol class="stepper" aria-label="Stages">
+      @for (step of timeline().steps; track step.stage; let i = $index) {
         <li [attr.data-status]="step.status" [attr.aria-current]="step.status === 'active' ? 'step' : null">
-          <span class="dot" aria-hidden="true"></span>
-          <span class="label">{{ stageLabels[step.stage] }}</span>
-          @if (step.visits > 1) {
-            <span class="visits" [attr.aria-label]="step.visits + ' times'">×{{ step.visits }}</span>
-          }
+          <span class="node" aria-hidden="true">
+            @switch (step.status) {
+              @case ('done') {
+                <svg viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5" /></svg>
+              }
+              @case ('stopped') {
+                <svg viewBox="0 0 24 24"><path d="M7 7l10 10M17 7 7 17" /></svg>
+              }
+              @default {
+                {{ i + 1 }}
+              }
+            }
+          </span>
+          <span class="step-label">{{ stageLabels[step.stage] }}</span>
+          <span class="step-sub">
+            @if (step.visits > 1) {
+              ×{{ step.visits }}
+            } @else if (step.status === 'active') {
+              running
+            } @else if (step.status === 'stopped') {
+              stopped
+            }
+          </span>
         </li>
       }
     </ol>
@@ -40,22 +78,81 @@
     @if (run.value()?.failureReason; as reason) {
       <p class="error" role="alert">{{ reason }}</p>
     }
+    @if (timeline().result === 'PR_OPENED') {
+      <p class="result success">
+        Pull request opened <span class="muted">(simulated in Phase 1; real PRs arrive in Phase 5)</span>
+      </p>
+    }
   </section>
 
-  <section class="card" aria-labelledby="log-title">
-    <div class="card-head">
-      <h2 id="log-title">Events</h2>
-      <span class="muted connection" aria-live="polite">{{ stream()?.connection() }}</span>
-    </div>
-    <ol class="log mono" aria-live="polite">
-      @for (event of logs(); track event.id) {
-        <li>
-          <time class="muted">{{ event.createdAt | date: 'HH:mm:ss' }}</time>
-          <span>{{ message(event.payload) }}</span>
-        </li>
-      } @empty {
-        <li class="muted">Waiting for events…</li>
+  <div class="columns">
+    <section class="terminal" aria-labelledby="log-title">
+      <div class="terminal-head">
+        <span class="lights" aria-hidden="true"><i></i><i></i><i></i></span>
+        <h2 id="log-title">Activity</h2>
+        <span class="conn" [attr.data-state]="stream()?.connection()" aria-live="polite">
+          <span class="conn-dot" aria-hidden="true"></span>{{ stream()?.connection() }}
+        </span>
+      </div>
+      <ol class="log mono" #logPanel (scroll)="onLogScroll(logPanel)" aria-live="polite">
+        @for (line of logs(); track line.id) {
+          <li [attr.data-kind]="line.kind">
+            <time>{{ line.at | date: 'HH:mm:ss' }}</time>
+            <span class="tag">{{ line.stage ? stageLabels[line.stage] : '—' }}</span>
+            <span class="text">{{ line.text }}</span>
+          </li>
+        } @empty {
+          <li class="waiting"><span class="cursor" aria-hidden="true"></span>Waiting for the worker to pick up this run…</li>
+        }
+        @if (!finished() && logs().length > 0) {
+          <li class="waiting"><span class="cursor" aria-hidden="true"></span></li>
+        }
+      </ol>
+      @if (!follow()) {
+        <button type="button" class="jump" (click)="follow.set(true); logPanel.scrollTop = logPanel.scrollHeight">
+          ↓ Jump to latest
+        </button>
       }
-    </ol>
-  </section>
+    </section>
+
+    <aside class="card details" aria-labelledby="details-title">
+      <h2 id="details-title">Details</h2>
+      <dl>
+        <div>
+          <dt>Run ID</dt>
+          <dd class="id">
+            <span class="mono">{{ id().slice(0, 8) }}…</span>
+            <button type="button" class="copy" (click)="copyId()" [attr.aria-label]="copied() ? 'Copied' : 'Copy run ID'">
+              {{ copied() ? 'Copied' : 'Copy' }}
+            </button>
+          </dd>
+        </div>
+        <div>
+          <dt>Created</dt>
+          <dd>{{ (run.value()?.createdAt | date: 'MMM d, HH:mm:ss') ?? '–' }}</dd>
+        </div>
+        <div>
+          <dt>Started</dt>
+          <dd>{{ (startedAt() | date: 'HH:mm:ss') ?? 'waiting' }}</dd>
+        </div>
+        <div>
+          <dt>Finished</dt>
+          <dd>{{ (finishedAt() | date: 'HH:mm:ss') ?? '–' }}</dd>
+        </div>
+        <div>
+          <dt>Events</dt>
+          <dd class="mono">{{ events().length }}</dd>
+        </div>
+      </dl>
+
+      <div class="soon">
+        <span class="eyebrow">Coming next</span>
+        <ul>
+          <li>Baseline vs after test counts <span>Phase 2–3</span></li>
+          <li>Recipe and agent diff <span>Phase 4</span></li>
+          <li>Review by hand <span>Phase 3</span></li>
+        </ul>
+      </div>
+    </aside>
+  </div>
 }
