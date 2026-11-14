@@ -1,8 +1,9 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormField, form, pattern, required, submit } from '@angular/forms/signals';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 
+import { GitHub, GitHubRepo } from '../../core/github';
 import { RunsApi } from '../../core/runs-api';
 import { RunsStore } from '../../core/runs-store';
 import { BRANCH_PATTERN, REPOSITORY_PATTERN } from '../../core/validation';
@@ -21,7 +22,7 @@ interface Step {
 
 @Component({
   selector: 'bs-new-run-page',
-  imports: [FormField, Icon],
+  imports: [FormField, Icon, RouterLink],
   templateUrl: './new-run-page.html',
   styleUrl: './new-run-page.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -30,6 +31,7 @@ export class NewRunPage {
   private readonly api = inject(RunsApi);
   private readonly router = inject(Router);
   private readonly store = inject(RunsStore);
+  protected readonly github = inject(GitHub);
 
   protected readonly model = signal<NewRun>({ repository: '', branch: '' });
   protected readonly newRun = form(this.model, (path) => {
@@ -40,6 +42,17 @@ export class NewRunPage {
   protected readonly submitError = signal<string | null>(null);
 
   protected readonly hasHistory = computed(() => this.store.runs.value().length > 0);
+
+  /** Allowlisted repositories matching what is typed, when GitHub is connected. */
+  protected readonly picks = computed(() => {
+    const typed = this.model().repository.trim().toLowerCase();
+    const allowed = this.github.allowed();
+    const exact = allowed.some((r) => r.fullName.toLowerCase() === typed);
+    return exact ? allowed : allowed.filter((r) => !typed || r.fullName.toLowerCase().includes(typed));
+  });
+  protected readonly selected = computed(() =>
+    this.github.allowed().find((r) => r.fullName.toLowerCase() === this.model().repository.trim().toLowerCase()) ?? null,
+  );
 
   /** Repositories from earlier runs, most recent first. Falls back to examples. */
   protected readonly suggestions = computed(() => {
@@ -62,6 +75,10 @@ export class NewRunPage {
 
   protected use(repository: string): void {
     this.model.update((m) => ({ ...m, repository }));
+  }
+
+  protected pick(repo: GitHubRepo): void {
+    this.model.update((m) => ({ ...m, repository: repo.fullName }));
   }
 
   protected async start(event: Event): Promise<void> {

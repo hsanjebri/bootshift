@@ -4,7 +4,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 
 import { Run } from '../../core/run.model';
-import { RUNS_URL, aRun } from '../../testing/fixtures';
+import { GitHubRepo } from '../../core/github';
+import { REPOS_URL, RUNS_URL, STATUS_URL, aGitHubRepo, aRun, gitHubStatus } from '../../testing/fixtures';
 import { NewRunPage } from './new-run-page';
 
 describe('NewRunPage', () => {
@@ -21,17 +22,24 @@ describe('NewRunPage', () => {
 
   afterEach(() => http.verify());
 
-  async function render(history: Run[] = []) {
+  async function render(history: Run[] = [], github: { connected: boolean; repos?: GitHubRepo[] } = { connected: false }) {
     fixture = TestBed.createComponent(NewRunPage);
     fixture.autoDetectChanges();
     TestBed.tick();
     http.expectOne(RUNS_URL).flush(history);
+    http.expectOne(STATUS_URL).flush(gitHubStatus(github.connected));
+    // Answer the repositories request (sent once connected) before waiting: whenStable waits for pending HTTP.
+    if (github.connected) {
+      await Promise.resolve();
+      TestBed.tick();
+      http.expectOne(REPOS_URL).flush(github.repos ?? []);
+    }
     await fixture.whenStable();
     return fixture.nativeElement as HTMLElement;
   }
 
   function type(el: HTMLElement, value: string) {
-    const input = el.querySelector<HTMLInputElement>('input[placeholder="owner/name"]')!;
+    const input = el.querySelector<HTMLInputElement>('input.mono')!;
     input.value = value;
     input.dispatchEvent(new Event('input'));
   }
@@ -71,6 +79,26 @@ describe('NewRunPage', () => {
 
     (el.querySelector('.chip') as HTMLButtonElement).click();
     await fixture.whenStable();
-    expect(el.querySelector<HTMLInputElement>('input[placeholder="owner/name"]')!.value).toBe('acme/shop');
+    expect(el.querySelector<HTMLInputElement>('input.mono')!.value).toBe('acme/shop');
+  });
+
+  it('offers allowlisted repositories as a picker once GitHub is connected', async () => {
+    const el = await render([], {
+      connected: true,
+      repos: [aGitHubRepo({ name: 'shop-api', allowed: true }), aGitHubRepo({ name: 'hidden', allowed: false })],
+    });
+
+    const picks = [...el.querySelectorAll('.pick-name')].map((p) => p.textContent?.trim());
+    expect(picks).toEqual(['hsanjebri/shop-api']);
+
+    (el.querySelector('.pick') as HTMLButtonElement).click();
+    await fixture.whenStable();
+    expect(el.querySelector<HTMLInputElement>('input[class~="mono"]')!.value).toBe('hsanjebri/shop-api');
+  });
+
+  it('points to the allowlist when GitHub is connected but nothing is allowed', async () => {
+    const el = await render([], { connected: true, repos: [aGitHubRepo({ allowed: false })] });
+
+    expect(el.querySelector('.notice a[href="/repositories"]')).not.toBeNull();
   });
 });

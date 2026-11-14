@@ -11,8 +11,8 @@
       <span class="label">Repository</span>
       <span class="input-wrap">
         <bs-icon name="git" [size]="17" />
-        <input type="text" placeholder="owner/name" autocomplete="off" spellcheck="false" class="mono"
-               [formField]="newRun.repository" />
+        <input type="text" [placeholder]="github.connected() ? 'Search allowed repositories' : 'owner/name'" autocomplete="off"
+               spellcheck="false" class="mono" [formField]="newRun.repository" />
       </span>
       @if (newRun.repository().touched() && newRun.repository().invalid()) {
         <span class="error" role="alert">{{ newRun.repository().errors()[0].message }}</span>
@@ -21,16 +21,42 @@
       }
     </label>
 
-    <div class="suggestions">
-      <span class="help">{{ hasHistory() ? 'Recent' : 'Try' }}</span>
-      @for (repo of suggestions(); track repo) {
-        <button type="button" class="chip mono" (click)="use(repo)">{{ repo }}</button>
+    @if (github.connected()) {
+      @if (github.allowed().length === 0) {
+        <p class="notice">
+          <bs-icon name="shield" [size]="16" />
+          <span>No repository is allowed yet. <a routerLink="/repositories">Choose repositories</a> Bootshift may work on.</span>
+        </p>
+      } @else {
+        <ul class="picker" role="listbox" aria-label="Allowed repositories">
+          @for (repo of picks(); track repo.fullName) {
+            <li role="option" [attr.aria-selected]="selected()?.fullName === repo.fullName">
+              <button type="button" class="pick" [class.on]="selected()?.fullName === repo.fullName" (click)="pick(repo)">
+                <span class="pick-avatar mono">{{ repo.owner.charAt(0).toUpperCase() }}</span>
+                <span class="pick-name mono">{{ repo.fullName }}</span>
+                <span class="pick-meta">{{ repo.isPrivate ? 'Private' : 'Public' }} · {{ repo.defaultBranch }}</span>
+                @if (selected()?.fullName === repo.fullName) {
+                  <bs-icon name="check" [size]="15" />
+                }
+              </button>
+            </li>
+          } @empty {
+            <li class="pick-none muted">No allowed repository matches. <a routerLink="/repositories">Allow more</a></li>
+          }
+        </ul>
       }
-    </div>
+    } @else {
+      <div class="suggestions">
+        <span class="help">{{ hasHistory() ? 'Recent' : 'Try' }}</span>
+        @for (repo of suggestions(); track repo) {
+          <button type="button" class="chip mono" (click)="use(repo)">{{ repo }}</button>
+        }
+      </div>
+    }
 
     <label class="field">
       <span class="label">Base branch <em>optional</em></span>
-      <input type="text" placeholder="default branch" autocomplete="off" spellcheck="false" class="mono"
+      <input type="text" [placeholder]="selected()?.defaultBranch ?? 'default branch'" autocomplete="off" spellcheck="false" class="mono"
              [formField]="newRun.branch" />
       @if (newRun.branch().touched() && newRun.branch().invalid()) {
         <span class="error" role="alert">{{ newRun.branch().errors()[0].message }}</span>

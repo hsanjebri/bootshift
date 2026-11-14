@@ -80,6 +80,66 @@
   background: var(--accent-soft);
 }
 
+.picker {
+  list-style: none;
+  margin: -0.4rem 0 0;
+  padding: 0.3rem;
+  max-height: 15rem;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 0.7rem;
+  background: var(--surface-2);
+}
+
+.pick {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 0.65rem;
+  width: 100%;
+  padding: 0.5rem 0.55rem;
+  border-radius: 0.5rem;
+  text-align: left;
+  font-size: 0.85rem;
+}
+
+.pick:hover {
+  background: var(--chip);
+}
+
+.pick.on {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.pick-avatar {
+  display: grid;
+  place-items: center;
+  width: 1.7rem;
+  height: 1.7rem;
+  border-radius: 0.45rem;
+  background: var(--chip);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.pick-name {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pick-meta {
+  font-size: 0.72rem;
+  color: var(--text-faint);
+}
+
+.pick-none {
+  padding: 0.6rem;
+  font-size: 0.82rem;
+}
+
 .target {
   display: flex;
   align-items: center;
