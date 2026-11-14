@@ -25,6 +25,9 @@
   --terminal-text: #d7dde3;
   --terminal-dim: #6c7680;
   --shadow: 0 1px 2px rgb(16 24 32 / 0.04), 0 4px 16px rgb(16 24 32 / 0.04);
+  --sidebar: #fbfbfc;
+  --surface-raised: #ffffff;
+  --shadow-lg: 0 10px 30px rgb(16 24 32 / 0.12), 0 2px 6px rgb(16 24 32 / 0.06);
   --radius: 0.85rem;
   --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, system-ui, sans-serif;
   --mono: ui-monospace, 'SF Mono', 'Cascadia Code', 'JetBrains Mono', Menlo, Consolas, monospace;
@@ -55,6 +58,9 @@
     --danger: #ef6b62;
     --danger-soft: rgb(239 107 98 / 0.14);
     --terminal-bg: #0a0c0d;
+    --sidebar: #121416;
+    --surface-raised: #1e2226;
+    --shadow-lg: 0 12px 36px rgb(0 0 0 / 0.5), 0 2px 8px rgb(0 0 0 / 0.3);
     --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 6px 20px rgb(0 0 0 / 0.25);
   }
 }
@@ -82,6 +88,9 @@
   --danger: #ef6b62;
   --danger-soft: rgb(239 107 98 / 0.14);
   --terminal-bg: #0a0c0d;
+  --sidebar: #121416;
+  --surface-raised: #1e2226;
+  --shadow-lg: 0 12px 36px rgb(0 0 0 / 0.5), 0 2px 8px rgb(0 0 0 / 0.3);
   --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 6px 20px rgb(0 0 0 / 0.25);
 }
 
@@ -193,67 +202,171 @@ a:focus-visible {
   outline-offset: 2px;
 }
 
+/*
+ * Buttons. One system for <button> and <a>:
+ *   .btn + primary | secondary | ghost | danger | icon, sizes sm | lg, aria-busy="true" for loading.
+ * Plain <button> elements stay unstyled so components can draw their own (chips, tabs, rows).
+ */
 button {
   font: inherit;
-  font-size: 0.88rem;
-  border-radius: 0.6rem;
-  padding: 0.55rem 1rem;
+  color: inherit;
+  border: none;
+  background: none;
   cursor: pointer;
-  border: 1px solid transparent;
-  transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.05s;
-}
-
-button:active:not(:disabled) {
-  transform: translateY(1px);
 }
 
 button:disabled {
-  opacity: 0.55;
   cursor: default;
 }
 
-button.primary {
-  background: var(--accent);
-  color: var(--on-accent);
-  font-weight: 600;
+.btn {
+  --btn-bg: var(--surface);
+  --btn-fg: var(--text);
+  --btn-border: var(--border-strong);
+  --btn-hover: var(--chip);
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  height: 2.25rem;
+  padding: 0 0.95rem;
+  border: 1px solid var(--btn-border);
+  border-radius: 0.6rem;
+  background: var(--btn-bg);
+  color: var(--btn-fg);
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 550;
+  line-height: 1;
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.14s, border-color 0.14s, color 0.14s, box-shadow 0.14s, transform 0.06s;
 }
 
-button.primary:hover:not(:disabled) {
-  background: var(--accent-strong);
+.btn:hover:not(:disabled) {
+  background: var(--btn-hover);
 }
 
-button.ghost {
-  background: transparent;
-  border-color: var(--border-strong);
-  color: var(--text);
+.btn:active:not(:disabled) {
+  transform: translateY(1px);
 }
 
-button.ghost:hover:not(:disabled) {
-  background: var(--chip);
+.btn:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 
-button.ghost.danger {
-  color: var(--danger);
+.btn.primary {
+  --btn-bg: var(--accent);
+  --btn-fg: var(--on-accent);
+  --btn-border: transparent;
+  --btn-hover: var(--accent-strong);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.12), inset 0 1px 0 rgb(255 255 255 / 0.12);
 }
 
-button.ghost.danger:hover:not(:disabled) {
-  background: var(--danger-soft);
-  border-color: var(--danger);
+.btn.secondary {
+  --btn-bg: var(--surface);
 }
 
-button.icon {
-  display: inline-grid;
-  place-items: center;
-  width: 2rem;
-  height: 2rem;
+.btn.ghost {
+  --btn-bg: transparent;
+  --btn-border: transparent;
+}
+
+.btn.danger {
+  --btn-bg: transparent;
+  --btn-fg: var(--danger);
+  --btn-border: color-mix(in srgb, var(--danger) 45%, transparent);
+  --btn-hover: var(--danger-soft);
+}
+
+.btn.icon {
+  --btn-bg: transparent;
+  --btn-border: transparent;
+  --btn-fg: var(--text-muted);
+  width: 2.25rem;
   padding: 0;
-  background: transparent;
-  color: var(--text-muted);
 }
 
-button.icon:hover {
-  background: var(--chip);
+.btn.icon:hover:not(:disabled) {
   color: var(--text);
+}
+
+.btn.sm {
+  height: 1.85rem;
+  padding: 0 0.65rem;
+  font-size: 0.78rem;
+  border-radius: 0.5rem;
+}
+
+.btn.icon.sm {
+  width: 1.85rem;
+  padding: 0;
+}
+
+.btn.lg {
+  height: 2.75rem;
+  padding: 0 1.25rem;
+  font-size: 0.92rem;
+}
+
+.btn[aria-busy='true'] {
+  color: transparent;
+  pointer-events: none;
+}
+
+.btn[aria-busy='true']::after {
+  content: '';
+  position: absolute;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  border: 2px solid var(--btn-fg);
+  border-right-color: transparent;
+  animation: btn-spin 0.7s linear infinite;
+}
+
+@keyframes btn-spin {
+  to {
+    rotate: 360deg;
+  }
+}
+
+/* Page header used by every page. */
+.page-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+
+.page-head h1 {
+  font-size: 1.55rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+.page-head p {
+  margin: 0.3rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  max-width: 40rem;
+}
+
+/* Notice for features that arrive in a later phase. */
+.notice {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  padding: 0.75rem 0.9rem;
+  border-radius: 0.65rem;
+  background: var(--chip);
+  color: var(--text-muted);
+  font-size: 0.83rem;
 }
 
 .sr-only {
