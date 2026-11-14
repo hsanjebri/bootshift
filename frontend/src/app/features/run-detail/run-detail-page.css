@@ -339,10 +339,12 @@
   right: 1rem;
   bottom: 1rem;
   font-size: 0.75rem;
-  padding: 0.35rem 0.7rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
   background: #45bccb;
   color: #08191c;
   font-weight: 600;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 0.35);
 }
 
 /* Details. */
@@ -377,18 +379,6 @@ dd {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-}
-
-.copy {
-  font-size: 0.7rem;
-  padding: 0.1rem 0.45rem;
-  border-radius: 0.35rem;
-  background: var(--chip);
-  color: var(--text-muted);
-}
-
-.copy:hover {
-  color: var(--accent);
 }
 
 .soon {

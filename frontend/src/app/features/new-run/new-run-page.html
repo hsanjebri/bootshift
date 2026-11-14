@@ -1,0 +1,84 @@
+<header class="page-head">
+  <div>
+    <h1>New run</h1>
+    <p>Upgrade a Maven project from Spring Boot 3.5 to 4.1. Nothing is merged: the result is a pull request for you to review.</p>
+  </div>
+</header>
+
+<div class="layout">
+  <form class="card form" (submit)="start($event)" novalidate aria-label="Start a run">
+    <label class="field">
+      <span class="label">Repository</span>
+      <span class="input-wrap">
+        <bs-icon name="git" [size]="17" />
+        <input type="text" placeholder="owner/name" autocomplete="off" spellcheck="false" class="mono"
+               [formField]="newRun.repository" />
+      </span>
+      @if (newRun.repository().touched() && newRun.repository().invalid()) {
+        <span class="error" role="alert">{{ newRun.repository().errors()[0].message }}</span>
+      } @else {
+        <span class="help">A GitHub repository, for example <span class="mono">spring-projects/spring-petclinic</span>.</span>
+      }
+    </label>
+
+    <div class="suggestions">
+      <span class="help">{{ hasHistory() ? 'Recent' : 'Try' }}</span>
+      @for (repo of suggestions(); track repo) {
+        <button type="button" class="chip mono" (click)="use(repo)">{{ repo }}</button>
+      }
+    </div>
+
+    <label class="field">
+      <span class="label">Base branch <em>optional</em></span>
+      <input type="text" placeholder="default branch" autocomplete="off" spellcheck="false" class="mono"
+             [formField]="newRun.branch" />
+      @if (newRun.branch().touched() && newRun.branch().invalid()) {
+        <span class="error" role="alert">{{ newRun.branch().errors()[0].message }}</span>
+      } @else {
+        <span class="help">Bootshift works on its own <span class="mono">bootshift/spring-boot-4</span> branch.</span>
+      }
+    </label>
+
+    <div class="target">
+      <div>
+        <span class="eyebrow">From</span>
+        <strong class="mono">Spring Boot 3.5.x</strong>
+      </div>
+      <bs-icon name="arrowRight" [size]="18" />
+      <div>
+        <span class="eyebrow">To</span>
+        <strong class="mono">Spring Boot 4.1.2</strong>
+      </div>
+    </div>
+
+    @if (submitError(); as message) {
+      <p class="error" role="alert">{{ message }}</p>
+    }
+
+    <div class="actions">
+      <span class="help"><kbd>Enter</kbd> to start</span>
+      <button type="submit" class="btn primary lg" [attr.aria-busy]="newRun().submitting()" [disabled]="newRun().submitting()">
+        <bs-icon name="play" [size]="15" /> Start run
+      </button>
+    </div>
+  </form>
+
+  <aside class="card steps" aria-labelledby="steps-title">
+    <h2 id="steps-title">What happens next</h2>
+    <ol>
+      @for (step of steps; track step.title; let i = $index) {
+        <li>
+          <span class="step-icon"><bs-icon [name]="step.icon" [size]="16" /></span>
+          <div>
+            <strong>{{ step.title }}</strong>
+            <p>{{ step.body }}</p>
+          </div>
+        </li>
+      }
+    </ol>
+    <p class="notice">
+      <bs-icon name="info" [size]="16" />
+      <span>Phase 1 simulates these stages: no clone, build or model call happens yet.</span>
+    </p>
+  </aside>
+</div>

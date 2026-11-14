@@ -28,8 +28,8 @@
         <bs-status-badge [state]="s" />
       }
       @if (canCancel()) {
-        <button type="button" class="ghost danger" (click)="cancel()" [disabled]="cancelling()">
-          {{ cancelling() ? 'Cancelling…' : 'Cancel' }}
+        <button type="button" class="btn danger sm" (click)="cancel()" [disabled]="cancelling()" [attr.aria-busy]="cancelling()">
+          <bs-icon name="stop" [size]="13" /> Cancel run
         </button>
       }
     </div>
@@ -122,8 +122,9 @@
           <dt>Run ID</dt>
           <dd class="id">
             <span class="mono">{{ id().slice(0, 8) }}…</span>
-            <button type="button" class="copy" (click)="copyId()" [attr.aria-label]="copied() ? 'Copied' : 'Copy run ID'">
-              {{ copied() ? 'Copied' : 'Copy' }}
+            <button type="button" class="btn icon sm" (click)="copyId()" [attr.aria-label]="copied() ? 'Copied' : 'Copy run ID'"
+                    [title]="copied() ? 'Copied' : 'Copy run ID'">
+              <bs-icon [name]="copied() ? 'check' : 'copy'" [size]="14" />
             </button>
           </dd>
         </div>

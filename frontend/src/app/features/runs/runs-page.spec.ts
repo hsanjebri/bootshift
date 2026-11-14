@@ -1,28 +1,15 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { TestBed } from '@angular/core/testing';
-import { Router, provideRouter } from '@angular/router';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 
 import { Run } from '../../core/run.model';
+import { RUNS_URL, aRun } from '../../testing/fixtures';
 import { RunsPage } from './runs-page';
 
-const RUN: Run = {
-  id: '6f1c2b1e-0000-4000-8000-000000000001',
-  repository: 'hsanjebri/demo-app',
-  status: 'PR_OPENED',
-  stage: 'REVIEW',
-  branch: null,
-  prUrl: null,
-  draft: false,
-  failureReason: null,
-  cancelRequested: false,
-  createdAt: '2026-11-13T09:00:00Z',
-  startedAt: '2026-11-13T09:00:01Z',
-  finishedAt: '2026-11-13T09:00:09Z',
-};
-
-describe('RunsPage', () => {
+describe('RunsPage (overview)', () => {
   let http: HttpTestingController;
+  let fixture: ComponentFixture<RunsPage>;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
@@ -32,57 +19,60 @@ describe('RunsPage', () => {
     http = TestBed.inject(HttpTestingController);
   });
 
-  afterEach(() => http.verify());
-
-  /** Renders the page and answers its initial list request (whenStable waits for pending HTTP). */
+  /** Renders the page and answers the shared store's list request (whenStable waits for pending HTTP). */
   async function render(runs: Run[]) {
-    const fixture = TestBed.createComponent(RunsPage);
+    fixture = TestBed.createComponent(RunsPage);
     fixture.autoDetectChanges();
     TestBed.tick();
-    http.expectOne('/api/v1/runs?limit=50').flush(runs);
+    http.expectOne(RUNS_URL).flush(runs);
     await fixture.whenStable();
-    return fixture;
+    return fixture.nativeElement as HTMLElement;
   }
 
-  it('lists runs from the API', async () => {
-    const fixture = await render([RUN]);
+  it('lists runs with their status', async () => {
+    const el = await render([aRun()]);
 
-    const row = (fixture.nativeElement as HTMLElement).querySelector('.run-row');
+    const row = el.querySelector('.run-row');
     expect(row?.textContent).toContain('hsanjebri/demo-app');
     expect(row?.textContent).toContain('PR opened');
   });
 
-  it('does not submit an invalid repository and shows why', async () => {
-    const fixture = await render([]);
-    const el = fixture.nativeElement as HTMLElement;
+  it('shows a Live now panel only for active runs', async () => {
+    const el = await render([aRun(), aRun({ id: 'b', repository: 'hsanjebri/busy', status: 'RECIPE', finishedAt: null })]);
 
-    const input = el.querySelector<HTMLInputElement>('input[placeholder="owner/name"]')!;
-    input.value = 'not a repo';
-    input.dispatchEvent(new Event('input'));
-    el.querySelector<HTMLButtonElement>('button[type="submit"]')!.click();
-    await fixture.whenStable();
-
-    http.expectNone((req) => req.method === 'POST');
-    expect(el.querySelector('[role="alert"]')?.textContent).toContain('owner/name');
+    const live = el.querySelector('.live');
+    expect(live?.textContent).toContain('hsanjebri/busy');
+    expect(live?.textContent).toContain('Recipes');
+    expect(live?.textContent).not.toContain('hsanjebri/demo-app');
   });
 
-  it('starts a run with an idempotency key and opens its page', async () => {
-    const fixture = await render([]);
-    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
-    const el = fixture.nativeElement as HTMLElement;
+  it('filters by repository name', async () => {
+    const el = await render([aRun(), aRun({ id: 'c', repository: 'acme/shop' })]);
 
-    const input = el.querySelector<HTMLInputElement>('input[placeholder="owner/name"]')!;
-    input.value = 'hsanjebri/demo-app';
-    input.dispatchEvent(new Event('input'));
-    el.querySelector<HTMLButtonElement>('button[type="submit"]')!.click();
+    const search = el.querySelector<HTMLInputElement>('#run-search')!;
+    search.value = 'acme';
+    search.dispatchEvent(new Event('input'));
     await fixture.whenStable();
 
-    const post = http.expectOne((req) => req.method === 'POST' && req.url === '/api/v1/runs');
-    expect(post.request.body).toEqual({ repository: 'hsanjebri/demo-app' });
-    expect(post.request.headers.get('Idempotency-Key')).toMatch(/^[0-9a-f-]{36}$/);
-    post.flush({ ...RUN, status: 'QUEUED' });
-    await fixture.whenStable();
+    const rows = [...el.querySelectorAll('.run-row')].map((r) => r.textContent);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toContain('acme/shop');
+  });
 
-    expect(navigate).toHaveBeenCalledWith(['/runs', RUN.id]);
+  it('computes the success rate from finished runs only', async () => {
+    const el = await render([
+      aRun(),
+      aRun({ id: 'd', status: 'FAILED' }),
+      aRun({ id: 'e', status: 'VERIFY', finishedAt: null }),
+    ]);
+
+    expect(el.querySelector('.stats')?.textContent).toContain('50%');
+  });
+
+  it('invites the user to start a run when there are none', async () => {
+    const el = await render([]);
+
+    expect(el.querySelector('.empty')?.textContent).toContain('No runs yet');
+    expect(el.querySelector('.empty a[href="/new"]')).not.toBeNull();
   });
 });

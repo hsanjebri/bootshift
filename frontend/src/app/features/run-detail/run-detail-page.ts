@@ -21,6 +21,7 @@ import { API, RunsApi } from '../../core/runs-api';
 import { Run, RunEvent, RunState, STAGES, STAGE_LABELS, Stage, isTerminal, toneOf } from '../../core/run.model';
 import { elapsed, formatDuration } from '../../core/time';
 import { buildTimeline, progressOf } from '../../core/timeline';
+import { Icon } from '../../shared/icon';
 import { StatusBadge } from '../../shared/status-badge';
 
 /** A log line tagged with the stage the run was in when it was written. */
@@ -34,7 +35,7 @@ interface LogLine {
 
 @Component({
   selector: 'bs-run-detail-page',
-  imports: [RouterLink, DatePipe, StatusBadge],
+  imports: [RouterLink, DatePipe, StatusBadge, Icon],
   templateUrl: './run-detail-page.html',
   styleUrl: './run-detail-page.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
