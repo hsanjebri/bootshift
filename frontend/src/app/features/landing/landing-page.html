@@ -1,0 +1,189 @@
+<div class="landing">
+  <header class="nav">
+    <div class="nav-inner">
+      <a routerLink="/" class="logo" aria-label="Bootshift home">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 15.5 12 10.5l5 5M7 10 12 5l5 5" /></svg>
+        Bootshift
+      </a>
+      <nav aria-label="Sections">
+        <a href="#how">How it works</a>
+        <a href="#features">Features</a>
+        <a href="#safety">Safety</a>
+        <a href="https://github.com/hsanjebri/bootshift#readme" target="_blank" rel="noopener">Docs</a>
+      </nav>
+      <button type="button" class="search" (click)="palette.open()" aria-label="Open command palette">
+        <bs-icon name="search" [size]="15" />
+        <kbd>Ctrl K</kbd>
+      </button>
+      <div class="nav-spacer"></div>
+      <a class="gh" href="https://github.com/hsanjebri/bootshift" target="_blank" rel="noopener">
+        <bs-icon name="git" [size]="15" /> GitHub
+      </a>
+      <a routerLink="/overview" class="pill white">Open dashboard</a>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- Hero -->
+    <section class="hero" aria-labelledby="hero-title">
+      <bs-starfield />
+      <div class="hero-inner">
+        <a class="badge" href="https://github.com/hsanjebri/bootshift" target="_blank" rel="noopener">
+          <span class="badge-tag">Open source</span>
+          <span>Apache 2.0</span>
+          <span class="sep" aria-hidden="true">·</span>
+          <span>Self-hosted</span>
+        </a>
+
+        <h1 id="hero-title">
+          <span>Spring Boot 3 → 4,</span>
+          <span class="dim">verified before it ships.</span>
+        </h1>
+
+        <p class="lede">
+          Bootshift records how your project behaves today, runs the OpenRewrite recipes, lets an AI agent fix what
+          still fails, and opens a pull request only when the build proves nothing broke.
+        </p>
+
+        <div class="cta">
+          <a routerLink="/new" class="pill white lg">Start a migration <bs-icon name="arrowRight" [size]="16" /></a>
+          <a href="#how" class="pill ghost lg">How it works</a>
+        </div>
+
+        <div class="window" aria-label="Illustrative demo of a run">
+          <div class="window-bar">
+            <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span class="window-title">bootshift · acme/shop-api</span>
+            <span class="window-tag">Illustrative demo</span>
+          </div>
+          <ol class="term" aria-live="off">
+            @for (line of demo(); track $index) {
+              <li [attr.data-tone]="line.tone">
+                <span class="mark">{{ line.mark }}</span>
+                @if (line.stage) {
+                  <span class="stage">{{ line.stage }}</span>
+                }
+                <span class="text">{{ line.text }}</span>
+              </li>
+            }
+            @if (!demoDone()) {
+              <li class="cursor-line"><span class="cursor" aria-hidden="true"></span></li>
+            }
+          </ol>
+        </div>
+      </div>
+    </section>
+
+    <!-- Built with -->
+    <section class="stack" aria-label="Built with">
+      <p>Built with</p>
+      <ul>
+        @for (item of stack; track item) {
+          <li>{{ item }}</li>
+        }
+      </ul>
+    </section>
+
+    <!-- How it works -->
+    <section id="how" class="section grid-bg" aria-labelledby="how-title">
+      <div class="section-head">
+        <h2 id="how-title"><span>Recipes first, AI second,</span> <span class="dim">verification always.</span></h2>
+        <p>The upgrade has no single sweeping change. It is many small breaks. Bootshift handles each layer with the right tool.</p>
+      </div>
+      <ol class="frame steps">
+        @for (step of steps; track step.n) {
+          <li>
+            <span class="step-n">{{ step.n }}</span>
+            <h3>{{ step.title }}</h3>
+            <p>{{ step.body }}</p>
+          </li>
+        }
+        <i class="corner tl" aria-hidden="true"></i><i class="corner tr" aria-hidden="true"></i>
+        <i class="corner bl" aria-hidden="true"></i><i class="corner br" aria-hidden="true"></i>
+      </ol>
+    </section>
+
+    <!-- Features -->
+    <section id="features" class="section" aria-labelledby="features-title">
+      <div class="section-head">
+        <h2 id="features-title"><span>Built like the build</span> <span class="dim">runs untrusted code.</span></h2>
+        <p>Because it does. Maven plugins and tests can execute anything, so the design splits secrets from builds.</p>
+      </div>
+      <div class="frame features">
+        @for (feature of features; track feature.title) {
+          <article>
+            <span class="feature-icon"><bs-icon [name]="feature.icon" [size]="18" /></span>
+            <h3>{{ feature.title }}</h3>
+            <p>{{ feature.body }}</p>
+          </article>
+        }
+        <i class="corner tl" aria-hidden="true"></i><i class="corner tr" aria-hidden="true"></i>
+        <i class="corner bl" aria-hidden="true"></i><i class="corner br" aria-hidden="true"></i>
+      </div>
+    </section>
+
+    <!-- Safety -->
+    <section id="safety" class="section grid-bg" aria-labelledby="safety-title">
+      <div class="split">
+        <div>
+          <p class="kicker">Green is not the same as safe</p>
+          <h2 id="safety-title"><span>Some breaks pass the build.</span> <span class="dim">Bootshift tells you anyway.</span></h2>
+          <p class="body">
+            While testing the recipes on our own fixtures, Jackson 3 started rejecting request bodies that leave out a
+            primitive field. The tempting fix edits the test. The right one keeps the API contract and flags the change
+            for a human.
+          </p>
+        </div>
+        <div class="review">
+          <div class="review-head">
+            <bs-icon name="alert" [size]="16" />
+            <strong>Review by hand</strong>
+          </div>
+          <ul>
+            <li>
+              <span class="mono">FAIL_ON_NULL_FOR_PRIMITIVES</span> is on by default in Jackson 3: missing
+              <span class="mono">boolean</span> fields now return 400.
+            </li>
+            <li>Default date output changes from timestamps to ISO strings.</li>
+            <li><span class="mono">PathPatternRequestMatcher</span> rejects <span class="mono">**</span> in the middle of a pattern.</li>
+          </ul>
+          <p class="review-foot">Found in Phase 0 on the <span class="mono">simple-web</span> and <span class="mono">security-chain</span> fixtures.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Final CTA -->
+    <section class="final" aria-labelledby="final-title">
+      <bs-starfield [density]="0.6" />
+      <h2 id="final-title"><span>Stop patching Boot 3.</span> <span class="dim">Start verifying Boot 4.</span></h2>
+      <div class="cta">
+        <a routerLink="/new" class="pill white lg">Start a migration <bs-icon name="arrowRight" [size]="16" /></a>
+        <a routerLink="/overview" class="pill ghost lg">Open dashboard</a>
+      </div>
+      <p class="status">
+        <span class="status-dot" [attr.data-status]="health.status()" aria-hidden="true"></span>
+        Local API
+        @switch (health.status()) {
+          @case ('up') { online }
+          @case ('down') { offline }
+          @default { checking… }
+        }
+        · Phase 1 runs a simulated pipeline
+      </p>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <span class="logo small">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 15.5 12 10.5l5 5M7 10 12 5l5 5" /></svg>
+        Bootshift
+      </span>
+      <p>
+        Apache 2.0. OpenRewrite recipes are not included and have their own license terms; they are resolved at run
+        time inside your sandbox.
+      </p>
+      <a href="https://github.com/hsanjebri/bootshift" target="_blank" rel="noopener">GitHub</a>
+    </div>
+  </footer>
+</div>
