@@ -1,0 +1,38 @@
+<dialog #dialog class="palette" aria-label="Command palette" (click)="onDialogClick($event)">
+  <div class="panel">
+    <label class="search">
+      <bs-icon name="search" [size]="18" />
+      <span class="sr-only">Search commands</span>
+      <input #input type="text" placeholder="Search pages and runs, or type owner/name to start a run"
+             autocomplete="off" spellcheck="false" role="combobox" aria-controls="palette-list"
+             aria-expanded="true" [attr.aria-activedescendant]="commands()[selected()]?.id ?? null"
+             [value]="query()" (input)="onInput(input.value)" (keydown)="onKeydown($event)" />
+      <kbd>Esc</kbd>
+    </label>
+
+    <div class="results" id="palette-list" role="listbox">
+      @for (group of groups(); track group.name) {
+        <div class="group" role="group" [attr.aria-label]="group.name">
+          <p class="group-name">{{ group.name }}</p>
+          @for (command of group.items; track command.id) {
+            <button type="button" role="option" class="item" [id]="command.id"
+                    [class.on]="indexOf(command) === selected()" [attr.aria-selected]="indexOf(command) === selected()"
+                    (mouseenter)="selected.set(indexOf(command))" (click)="execute(command)">
+              <span class="item-icon"><bs-icon [name]="command.icon" [size]="16" /></span>
+              <span class="item-label" [class.mono]="command.group !== 'Go to'">{{ command.label }}</span>
+              <span class="item-hint">{{ command.hint }}</span>
+            </button>
+          }
+        </div>
+      } @empty {
+        <p class="none">No matches. Type a full <span class="mono">owner/name</span> to start a run.</p>
+      }
+    </div>
+
+    <footer>
+      <span><kbd>↑</kbd><kbd>↓</kbd> move</span>
+      <span><kbd>Enter</kbd> open</span>
+      <span><kbd>Esc</kbd> close</span>
+    </footer>
+  </div>
+</dialog>
