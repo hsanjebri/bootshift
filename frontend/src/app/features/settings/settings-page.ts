@@ -1,4 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { RouterLink } from '@angular/router';
+
+import { GitHub } from '../../core/github';
 
 import { BackendHealth } from '../../core/health';
 import { Theme, ThemeChoice } from '../../core/theme';
@@ -6,7 +9,7 @@ import { Icon, IconName } from '../../shared/icon';
 
 @Component({
   selector: 'bs-settings-page',
-  imports: [Icon],
+  imports: [Icon, RouterLink],
   templateUrl: './settings-page.html',
   styleUrl: './settings-page.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -14,6 +17,7 @@ import { Icon, IconName } from '../../shared/icon';
 export class SettingsPage {
   protected readonly theme = inject(Theme);
   protected readonly health = inject(BackendHealth);
+  protected readonly github = inject(GitHub);
 
   protected readonly themes: { id: ThemeChoice; label: string; icon: IconName }[] = [
     { id: 'system', label: 'System', icon: 'monitor' },

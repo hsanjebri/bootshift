@@ -6,6 +6,71 @@
 </header>
 
 <div class="sections">
+  <section class="card section" aria-labelledby="github-title">
+    <div class="section-info">
+      <h2 id="github-title">GitHub</h2>
+      <p>Bootshift uses your own GitHub App, so it only sees the repositories you install it on.</p>
+    </div>
+    <div class="section-body">
+      @if (github.status.value(); as status) {
+        @if (status.configured) {
+          <div class="status-row" [attr.data-status]="status.error ? 'down' : 'up'">
+            <span class="dot" aria-hidden="true"></span>
+            <span>
+              @if (status.error) { App configured, but GitHub could not be reached }
+              @else { Connected as <strong class="mono">{{ status.appSlug ?? 'GitHub App' }}</strong> }
+            </span>
+          </div>
+          @if (status.error) {
+            <p class="error">{{ status.error }}</p>
+          }
+          @if (status.installations.length) {
+            <ul class="installs">
+              @for (install of status.installations; track install.id) {
+                <li>
+                  <span class="avatar mono">{{ install.account.charAt(0).toUpperCase() }}</span>
+                  <span class="mono">{{ install.account }}</span>
+                  <span class="muted">{{ install.repositorySelection === 'all' ? 'All repositories' : 'Selected repositories' }}</span>
+                </li>
+              }
+            </ul>
+          } @else if (!status.error) {
+            <p class="notice"><bs-icon name="info" [size]="16" /><span>The app is not installed anywhere yet.</span></p>
+          }
+          <div class="row-actions">
+            @if (status.installUrl) {
+              <a class="btn primary sm" [href]="status.installUrl" target="_blank" rel="noopener">
+                <bs-icon name="git" [size]="14" /> {{ status.installations.length ? 'Change repositories' : 'Install on GitHub' }}
+              </a>
+            }
+            <a class="btn secondary sm" routerLink="/repositories">Manage allowlist</a>
+            <button type="button" class="btn ghost sm" (click)="github.refresh()">
+              <bs-icon name="refresh" [size]="14" /> Refresh
+            </button>
+          </div>
+        } @else {
+          <div class="status-row" data-status="off">
+            <span class="dot" aria-hidden="true"></span>
+            <span>Not connected</span>
+          </div>
+          <ol class="setup">
+            <li>Create a GitHub App with <strong>Contents</strong> and <strong>Pull requests</strong> read and write, and <strong>Metadata</strong> read.</li>
+            <li>Generate a private key and keep the <span class="mono">.pem</span> outside the repository.</li>
+            <li>Start the backend with these variables, then install the app on your repositories.</li>
+          </ol>
+          <pre class="snippet mono"><code>GITHUB_APP_ID=123456
+GITHUB_APP_SLUG=your-app-name
+GITHUB_APP_PRIVATE_KEY_PATH=C:\Users\you\.bootshift\github-app.pem</code></pre>
+          <p class="notice"><bs-icon name="info" [size]="16" /><span>Step-by-step guide: <span class="mono">docs/github-app.md</span>. Until GitHub is connected, simulated runs accept any repository name.</span></p>
+        }
+      } @else if (github.status.error()) {
+        <p class="error">Could not load the GitHub status. Is the backend running?</p>
+      } @else {
+        <p class="muted">Checking…</p>
+      }
+    </div>
+  </section>
+
   <section class="card section" aria-labelledby="appearance-title">
     <div class="section-info">
       <h2 id="appearance-title">Appearance</h2>

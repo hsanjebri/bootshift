@@ -1,6 +1,35 @@
+import { GitHubRepo, GitHubStatus } from '../core/github';
 import { Run } from '../core/run.model';
 
 export const RUNS_URL = '/api/v1/runs?limit=200';
+export const STATUS_URL = '/api/v1/github/status';
+export const REPOS_URL = '/api/v1/github/repositories';
+
+export function gitHubStatus(configured: boolean): GitHubStatus {
+  return {
+    configured,
+    appSlug: configured ? 'bootshift-test' : null,
+    installUrl: configured ? 'https://github.com/apps/bootshift-test/installations/new' : null,
+    installations: configured ? [{ id: 7, account: 'hsanjebri', accountType: 'User', repositorySelection: 'selected' }] : [],
+    error: null,
+  };
+}
+
+export function aGitHubRepo(overrides: Partial<GitHubRepo> = {}): GitHubRepo {
+  const name = overrides.name ?? 'demo-app';
+  return {
+    owner: 'hsanjebri',
+    name,
+    fullName: `hsanjebri/${name}`,
+    isPrivate: true,
+    archived: false,
+    defaultBranch: 'main',
+    htmlUrl: `https://github.com/hsanjebri/${name}`,
+    pushedAt: '2026-11-13T09:00:00Z',
+    allowed: false,
+    ...overrides,
+  };
+}
 
 export function aRun(overrides: Partial<Run> = {}): Run {
   return {
