@@ -20,6 +20,13 @@ public final class RunExceptions {
         }
     }
 
+    /** The repository is not on the allowlist (enforced once a GitHub App is connected). */
+    public static final class RepositoryNotAllowed extends RuntimeException {
+        public RepositoryNotAllowed(String repository) {
+            super("Repository " + repository + " is not on the allowlist. Allow it on the Repositories page first.");
+        }
+    }
+
     /** The same Idempotency-Key was sent with a different request body. */
     public static final class IdempotencyKeyReused extends RuntimeException {
         public IdempotencyKeyReused(String key) {

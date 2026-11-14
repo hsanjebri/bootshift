@@ -7,7 +7,9 @@ import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import dev.bootshift.github.GitHubApp;
 import dev.bootshift.run.RunExceptions.IdempotencyKeyReused;
+import dev.bootshift.run.RunExceptions.RepositoryNotAllowed;
 import dev.bootshift.run.RunExceptions.RunAlreadyFinished;
 import dev.bootshift.run.RunExceptions.RunNotFound;
 
@@ -38,6 +40,31 @@ class ProblemHandler {
     @ExceptionHandler
     ProblemDetail invalid(RunController.InvalidRequest e) {
         return problem(HttpStatus.BAD_REQUEST, "invalid-request", "Invalid request", e.getMessage());
+    }
+
+    @ExceptionHandler
+    ProblemDetail notAllowed(RepositoryNotAllowed e) {
+        return problem(HttpStatus.FORBIDDEN, "repository-not-allowed", "Repository not allowed", e.getMessage());
+    }
+
+    @ExceptionHandler
+    ProblemDetail notVisible(GitHubController.RepositoryNotVisible e) {
+        return problem(HttpStatus.NOT_FOUND, "repository-not-visible", "Repository not visible to the GitHub App", e.getMessage());
+    }
+
+    @ExceptionHandler
+    ProblemDetail archived(GitHubController.RepositoryArchived e) {
+        return problem(HttpStatus.UNPROCESSABLE_CONTENT, "repository-archived", "Repository archived", e.getMessage());
+    }
+
+    @ExceptionHandler
+    ProblemDetail githubNotConfigured(GitHubApp.GitHubNotConfigured e) {
+        return problem(HttpStatus.CONFLICT, "github-not-configured", "GitHub is not connected", e.getMessage());
+    }
+
+    @ExceptionHandler
+    ProblemDetail githubUnavailable(GitHubApp.GitHubUnavailable e) {
+        return problem(HttpStatus.BAD_GATEWAY, "github-unavailable", "GitHub request failed", e.getMessage());
     }
 
     private static ProblemDetail problem(HttpStatus status, String type, String title, String detail) {

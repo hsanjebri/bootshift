@@ -36,6 +36,11 @@ management:
         url: ${BOOTSHIFT_OTEL_METRICS_URL:http://localhost:4318/v1/metrics}
 
 bootshift:
+  github:
+    # Your own GitHub App (docs/github-app.md). Once these are set, runs are limited to allowlisted repositories.
+    app-id: ${GITHUB_APP_ID:}
+    app-slug: ${GITHUB_APP_SLUG:}
+    private-key-path: ${GITHUB_APP_PRIVATE_KEY_PATH:}
   runs:
     max-concurrent: 2
     poll-interval: 500ms

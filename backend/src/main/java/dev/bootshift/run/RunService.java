@@ -10,8 +10,10 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import dev.bootshift.repo.AllowlistPolicy;
 import dev.bootshift.repo.RepositoryService;
 import dev.bootshift.run.RunExceptions.IdempotencyKeyReused;
+import dev.bootshift.run.RunExceptions.RepositoryNotAllowed;
 import dev.bootshift.run.RunExceptions.RunAlreadyFinished;
 import dev.bootshift.run.RunExceptions.RunNotFound;
 
@@ -23,12 +25,15 @@ public class RunService {
     private final RunStateWriter writer;
     private final RunEventLog events;
     private final RepositoryService repositories;
+    private final AllowlistPolicy allowlist;
 
-    RunService(RunStore store, RunStateWriter writer, RunEventLog events, RepositoryService repositories) {
+    RunService(RunStore store, RunStateWriter writer, RunEventLog events, RepositoryService repositories,
+               AllowlistPolicy allowlist) {
         this.store = store;
         this.writer = writer;
         this.events = events;
         this.repositories = repositories;
+        this.allowlist = allowlist;
     }
 
     /** Result of {@link #start}: {@code created} is false when an idempotent retry returned an existing run. */
@@ -42,6 +47,9 @@ public class RunService {
             if (existing.isPresent()) {
                 return replay(existing.get(), command, idempotencyKey);
             }
+        }
+        if (allowlist.enforced() && !repositories.isAllowed(command.repository())) {
+            throw new RepositoryNotAllowed(command.repository().toString());
         }
         UUID repositoryId = repositories.findOrCreate(command.repository());
         var inserted = store.insertQueued(repositoryId, command.branch(), idempotencyKey);
