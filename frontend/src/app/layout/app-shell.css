@@ -3,20 +3,6 @@
   --sidebar-w: 15.5rem;
 }
 
-.skip {
-  position: absolute;
-  left: -999px;
-  top: 0.5rem;
-  z-index: 60;
-  background: var(--surface);
-  padding: 0.5rem 0.75rem;
-  border-radius: 0.5rem;
-}
-
-.skip:focus {
-  left: 0.75rem;
-}
-
 .shell {
   display: grid;
   grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
@@ -101,6 +87,10 @@
 
 .search-trigger span {
   flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 kbd {
@@ -138,9 +128,10 @@ nav a:hover {
 }
 
 nav a.active {
-  background: var(--accent-soft);
-  color: var(--accent);
+  background: var(--chip);
+  color: var(--text);
   font-weight: 600;
+  box-shadow: inset 2px 0 0 var(--accent);
 }
 
 nav a span:not(.live-count) {

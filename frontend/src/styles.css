@@ -1,35 +1,42 @@
-/* Quiet, dense, developer-focused. One teal accent; green, amber and red only for results. */
+/*
+ * Monochrome, near-black dark mode and clean light mode. Teal is the single accent and marks
+ * live progress; green, amber and red appear only for results (README section 12).
+ */
 :root {
   color-scheme: light;
-  --bg: #f5f6f7;
-  --bg-glow: rgb(15 123 138 / 0.07);
+  --bg: #f7f7f8;
+  --bg-glow: rgb(14 124 139 / 0.06);
+  --grid: rgb(9 9 11 / 0.035);
+  --sidebar: #fbfbfc;
   --surface: #ffffff;
-  --surface-2: #fafbfb;
-  --chip: #eef0f2;
-  --border: #e3e6e9;
-  --border-strong: #c9ced4;
-  --text: #15171a;
-  --text-muted: #5b6370;
-  --text-faint: #98a0aa;
+  --surface-2: #f9f9fa;
+  --surface-raised: #ffffff;
+  --chip: #f0f0f2;
+  --border: #e6e6e9;
+  --border-strong: #d0d0d6;
+  --text: #09090b;
+  --text-muted: #5b5b66;
+  --text-faint: #9a9aa3;
+  --primary-bg: #111113;
+  --primary-fg: #ffffff;
+  --primary-hover: #2a2a2f;
   --accent: #0e7c8b;
   --accent-strong: #0a6672;
-  --accent-soft: rgb(14 124 139 / 0.12);
+  --accent-soft: rgb(14 124 139 / 0.1);
   --on-accent: #ffffff;
   --success: #1d8a4b;
-  --success-soft: rgb(29 138 75 / 0.12);
+  --success-soft: rgb(29 138 75 / 0.1);
   --warning: #a46700;
-  --warning-soft: rgb(164 103 0 / 0.12);
+  --warning-soft: rgb(164 103 0 / 0.1);
   --danger: #c4372f;
-  --danger-soft: rgb(196 55 47 / 0.11);
-  --terminal-bg: #0f1214;
-  --terminal-text: #d7dde3;
-  --terminal-dim: #6c7680;
-  --shadow: 0 1px 2px rgb(16 24 32 / 0.04), 0 4px 16px rgb(16 24 32 / 0.04);
-  --sidebar: #fbfbfc;
-  --surface-raised: #ffffff;
-  --shadow-lg: 0 10px 30px rgb(16 24 32 / 0.12), 0 2px 6px rgb(16 24 32 / 0.06);
+  --danger-soft: rgb(196 55 47 / 0.1);
+  --terminal-bg: #0c0c0e;
+  --terminal-text: #d9dbe0;
+  --terminal-dim: #6e7079;
+  --shadow: 0 1px 2px rgb(9 9 11 / 0.04), 0 4px 14px rgb(9 9 11 / 0.04);
+  --shadow-lg: 0 12px 32px rgb(9 9 11 / 0.12), 0 2px 6px rgb(9 9 11 / 0.06);
   --radius: 0.85rem;
-  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, system-ui, sans-serif;
+  --font: 'Inter Variable', Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   --mono: ui-monospace, 'SF Mono', 'Cascadia Code', 'JetBrains Mono', Menlo, Consolas, monospace;
 }
 
@@ -37,61 +44,69 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
     color-scheme: dark;
-    --bg: #0e1012;
-    --bg-glow: rgb(63 182 196 / 0.08);
-    --surface: #16191c;
-    --surface-2: #1b1f22;
-    --chip: #23282c;
-    --border: #262b30;
-    --border-strong: #3a4047;
-    --text: #e8eaed;
-    --text-muted: #9ea5ae;
-    --text-faint: #69717b;
+    --bg: #09090b;
+    --bg-glow: rgb(69 188 203 / 0.06);
+    --grid: rgb(255 255 255 / 0.028);
+    --sidebar: #0b0b0d;
+    --surface: #111113;
+    --surface-2: #151518;
+    --surface-raised: #18181b;
+    --chip: #1c1c20;
+    --border: #222227;
+    --border-strong: #33333a;
+    --text: #ededef;
+    --text-muted: #a1a1aa;
+    --text-faint: #686871;
+    --primary-bg: #fafafa;
+    --primary-fg: #09090b;
+    --primary-hover: #d9d9dd;
     --accent: #45bccb;
     --accent-strong: #6fd0dc;
-    --accent-soft: rgb(69 188 203 / 0.14);
-    --on-accent: #08191c;
+    --accent-soft: rgb(69 188 203 / 0.12);
+    --on-accent: #06181b;
     --success: #4cc27e;
-    --success-soft: rgb(76 194 126 / 0.14);
+    --success-soft: rgb(76 194 126 / 0.12);
     --warning: #e3aa3e;
-    --warning-soft: rgb(227 170 62 / 0.14);
+    --warning-soft: rgb(227 170 62 / 0.12);
     --danger: #ef6b62;
-    --danger-soft: rgb(239 107 98 / 0.14);
-    --terminal-bg: #0a0c0d;
-    --sidebar: #121416;
-    --surface-raised: #1e2226;
-    --shadow-lg: 0 12px 36px rgb(0 0 0 / 0.5), 0 2px 8px rgb(0 0 0 / 0.3);
-    --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 6px 20px rgb(0 0 0 / 0.25);
+    --danger-soft: rgb(239 107 98 / 0.12);
+    --terminal-bg: #070708;
+    --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 6px 20px rgb(0 0 0 / 0.3);
+    --shadow-lg: 0 16px 40px rgb(0 0 0 / 0.6), 0 2px 8px rgb(0 0 0 / 0.4);
   }
 }
 
 :root[data-theme='dark'] {
   color-scheme: dark;
-  --bg: #0e1012;
-  --bg-glow: rgb(63 182 196 / 0.08);
-  --surface: #16191c;
-  --surface-2: #1b1f22;
-  --chip: #23282c;
-  --border: #262b30;
-  --border-strong: #3a4047;
-  --text: #e8eaed;
-  --text-muted: #9ea5ae;
-  --text-faint: #69717b;
+  --bg: #09090b;
+  --bg-glow: rgb(69 188 203 / 0.06);
+  --grid: rgb(255 255 255 / 0.028);
+  --sidebar: #0b0b0d;
+  --surface: #111113;
+  --surface-2: #151518;
+  --surface-raised: #18181b;
+  --chip: #1c1c20;
+  --border: #222227;
+  --border-strong: #33333a;
+  --text: #ededef;
+  --text-muted: #a1a1aa;
+  --text-faint: #686871;
+  --primary-bg: #fafafa;
+  --primary-fg: #09090b;
+  --primary-hover: #d9d9dd;
   --accent: #45bccb;
   --accent-strong: #6fd0dc;
-  --accent-soft: rgb(69 188 203 / 0.14);
-  --on-accent: #08191c;
+  --accent-soft: rgb(69 188 203 / 0.12);
+  --on-accent: #06181b;
   --success: #4cc27e;
-  --success-soft: rgb(76 194 126 / 0.14);
+  --success-soft: rgb(76 194 126 / 0.12);
   --warning: #e3aa3e;
-  --warning-soft: rgb(227 170 62 / 0.14);
+  --warning-soft: rgb(227 170 62 / 0.12);
   --danger: #ef6b62;
-  --danger-soft: rgb(239 107 98 / 0.14);
-  --terminal-bg: #0a0c0d;
-  --sidebar: #121416;
-  --surface-raised: #1e2226;
-  --shadow-lg: 0 12px 36px rgb(0 0 0 / 0.5), 0 2px 8px rgb(0 0 0 / 0.3);
-  --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 6px 20px rgb(0 0 0 / 0.25);
+  --danger-soft: rgb(239 107 98 / 0.12);
+  --terminal-bg: #070708;
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 6px 20px rgb(0 0 0 / 0.3);
+  --shadow-lg: 0 16px 40px rgb(0 0 0 / 0.6), 0 2px 8px rgb(0 0 0 / 0.4);
 }
 
 * {
@@ -112,8 +127,11 @@ body {
 body {
   background:
     radial-gradient(60rem 24rem at 50% -8rem, var(--bg-glow), transparent 70%),
+    linear-gradient(var(--grid) 1px, transparent 1px) 0 0 / 2.5rem 2.5rem,
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px) 0 0 / 2.5rem 2.5rem,
     var(--bg);
   min-height: 100vh;
+  font-feature-settings: 'cv11', 'ss01';
 }
 
 h1,
@@ -259,11 +277,11 @@ button:disabled {
 }
 
 .btn.primary {
-  --btn-bg: var(--accent);
-  --btn-fg: var(--on-accent);
+  --btn-bg: var(--primary-bg);
+  --btn-fg: var(--primary-fg);
   --btn-border: transparent;
-  --btn-hover: var(--accent-strong);
-  box-shadow: 0 1px 2px rgb(0 0 0 / 0.12), inset 0 1px 0 rgb(255 255 255 / 0.12);
+  --btn-hover: var(--primary-hover);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.15);
 }
 
 .btn.secondary {
