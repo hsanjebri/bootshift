@@ -1,0 +1,60 @@
+<header class="page-head">
+  <div>
+    <h1>Repositories</h1>
+    <p>Every repository you have run Bootshift on, with its latest result.</p>
+  </div>
+  <a routerLink="/new" class="btn secondary"><bs-icon name="plus" [size]="15" /> Add by running</a>
+</header>
+
+<p class="notice">
+  <bs-icon name="shield" [size]="16" />
+  <span>Built from your runs. The repository allowlist, which decides what Bootshift may touch, gets its own API in Phase 5.</span>
+</p>
+
+@if (repos().length === 0) {
+  <section class="card empty">
+    <bs-icon name="repo" [size]="34" />
+    <strong>No repositories yet</strong>
+    <span class="muted">They appear here after their first run.</span>
+    <a routerLink="/new" class="btn primary sm"><bs-icon name="plus" [size]="15" /> New run</a>
+  </section>
+} @else {
+  <section class="grid" aria-label="Repositories">
+    @for (repo of repos(); track repo.name) {
+      <article class="card repo" [class.running]="repo.running">
+        <header>
+          <span class="avatar mono" aria-hidden="true">{{ repo.name.charAt(0).toUpperCase() }}</span>
+          <div class="names">
+            <span class="owner mono">{{ repo.name.split('/')[0] }}</span>
+            <h2 class="mono">{{ repo.name.split('/')[1] }}</h2>
+          </div>
+          <bs-status-badge [state]="repo.latest.status" />
+        </header>
+
+        <dl>
+          <div>
+            <dt>Runs</dt>
+            <dd>{{ repo.runs }}</dd>
+          </div>
+          <div>
+            <dt>Success</dt>
+            <dd>{{ rate(repo) === null ? '–' : rate(repo) + '%' }}</dd>
+          </div>
+          <div>
+            <dt>Last run</dt>
+            <dd>{{ relativeTime(repo.latest.createdAt, now()) }}</dd>
+          </div>
+        </dl>
+
+        <footer>
+          <a class="btn ghost sm" [routerLink]="['/runs', repo.latest.id]">Latest run <bs-icon name="chevronRight" [size]="14" /></a>
+          <button type="button" class="btn secondary sm" (click)="runAgain(repo)"
+                  [disabled]="repo.running || starting() !== null" [attr.aria-busy]="starting() === repo.name"
+                  [title]="repo.running ? 'A run is already in progress' : 'Start a new run'">
+            <bs-icon name="play" [size]="13" /> Run again
+          </button>
+        </footer>
+      </article>
+    }
+  </section>
+}
