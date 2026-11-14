@@ -1,51 +1,100 @@
 <header class="page-head">
   <div>
     <h1>Repositories</h1>
-    <p>Every repository you have run Bootshift on, with its latest result.</p>
+    <p>Choose which GitHub repositories Bootshift may work on. Runs are refused for anything not on this list.</p>
   </div>
-  <a routerLink="/new" class="btn secondary"><bs-icon name="plus" [size]="15" /> Add by running</a>
+  @if (github.status.value()?.installUrl; as installUrl) {
+    <a class="btn secondary" [href]="installUrl" target="_blank" rel="noopener">
+      <bs-icon name="git" [size]="15" /> {{ github.status.value()?.installations?.length ? 'Change GitHub access' : 'Install on GitHub' }}
+    </a>
+  }
 </header>
 
-<p class="notice">
-  <bs-icon name="shield" [size]="16" />
-  <span>Built from your runs. The repository allowlist, which decides what Bootshift may touch, gets its own API in Phase 5.</span>
-</p>
-
-@if (repos().length === 0) {
-  <section class="card empty">
-    <bs-icon name="repo" [size]="34" />
-    <strong>No repositories yet</strong>
-    <span class="muted">They appear here after their first run.</span>
-    <a routerLink="/new" class="btn primary sm"><bs-icon name="plus" [size]="15" /> New run</a>
+@if (!github.connected()) {
+  <section class="card connect">
+    <span class="connect-icon"><bs-icon name="git" [size]="22" /></span>
+    <div>
+      <h2>Connect GitHub</h2>
+      <p class="muted">
+        Create your own GitHub App and point the backend at it. Bootshift will then list the repositories you install
+        it on, and you allow the ones it may migrate.
+      </p>
+    </div>
+    <a routerLink="/settings" class="btn primary">Set up GitHub</a>
   </section>
 } @else {
-  <section class="grid" aria-label="Repositories">
-    @for (repo of repos(); track repo.name) {
-      <article class="card repo" [class.running]="repo.running">
+  <section class="card gh" aria-labelledby="gh-title">
+    <div class="toolbar">
+      <h2 id="gh-title">On GitHub <span class="count">{{ github.allowed().length }} of {{ github.repositories.value().length }} allowed</span></h2>
+      <label class="search">
+        <bs-icon name="search" [size]="15" />
+        <span class="sr-only">Search repositories</span>
+        <input type="search" placeholder="Find a repository" autocomplete="off"
+               [value]="search()" (input)="search.set($any($event.target).value)" />
+      </label>
+      <button type="button" class="btn icon sm" (click)="github.refresh()" aria-label="Refresh" title="Refresh">
+        <bs-icon name="refresh" [size]="16" />
+      </button>
+    </div>
+
+    @if (github.repositories.error()) {
+      <p class="error pad" role="alert">Could not list repositories from GitHub. Check the app settings and try again.</p>
+    } @else if (github.repositories.isLoading() && github.repositories.value().length === 0) {
+      <p class="muted pad">Loading repositories from GitHub…</p>
+    } @else if (githubRepos().length === 0) {
+      <div class="empty">
+        <bs-icon name="repo" [size]="30" />
+        <strong>{{ search() ? 'No matching repositories' : 'The app cannot see any repositories yet' }}</strong>
+        @if (!search()) {
+          <span class="muted">Install it on at least one repository from GitHub.</span>
+        }
+      </div>
+    } @else {
+      <ul class="gh-list" role="list">
+        @for (repo of githubRepos(); track repo.fullName) {
+          <li [class.on]="repo.allowed">
+            <span class="avatar mono" aria-hidden="true">{{ repo.owner.charAt(0).toUpperCase() }}</span>
+            <span class="who">
+              <a class="repo mono" [href]="repo.htmlUrl" target="_blank" rel="noopener">{{ repo.fullName }}</a>
+              <span class="sub muted">
+                <span class="tag" [class.private]="repo.isPrivate">{{ repo.isPrivate ? 'Private' : 'Public' }}</span>
+                @if (repo.archived) { <span class="tag">Archived</span> }
+                <bs-icon name="git" [size]="12" /> {{ repo.defaultBranch }}
+                @if (repo.pushedAt) { · pushed {{ relativeTime(repo.pushedAt, now()) }} }
+              </span>
+            </span>
+            <button type="button" role="switch" class="switch" [attr.aria-checked]="repo.allowed"
+                    [attr.aria-label]="(repo.allowed ? 'Disallow ' : 'Allow ') + repo.fullName"
+                    [disabled]="toggling() === repo.fullName || (repo.archived && !repo.allowed)"
+                    [title]="repo.archived && !repo.allowed ? 'Archived repositories cannot be allowed' : ''"
+                    (click)="toggle(repo)">
+              <span class="knob"></span>
+            </button>
+          </li>
+        }
+      </ul>
+    }
+  </section>
+}
+
+@if (fromRuns().length > 0) {
+  <h2 class="sub-head">From your runs</h2>
+  <section class="grid" aria-label="Repositories from runs">
+    @for (repo of fromRuns(); track repo.name) {
+      <article class="card repo-card" [class.running]="repo.running">
         <header>
           <span class="avatar mono" aria-hidden="true">{{ repo.name.charAt(0).toUpperCase() }}</span>
           <div class="names">
             <span class="owner mono">{{ repo.name.split('/')[0] }}</span>
-            <h2 class="mono">{{ repo.name.split('/')[1] }}</h2>
+            <h3 class="mono">{{ repo.name.split('/')[1] }}</h3>
           </div>
           <bs-status-badge [state]="repo.latest.status" />
         </header>
-
         <dl>
-          <div>
-            <dt>Runs</dt>
-            <dd>{{ repo.runs }}</dd>
-          </div>
-          <div>
-            <dt>Success</dt>
-            <dd>{{ rate(repo) === null ? '–' : rate(repo) + '%' }}</dd>
-          </div>
-          <div>
-            <dt>Last run</dt>
-            <dd>{{ relativeTime(repo.latest.createdAt, now()) }}</dd>
-          </div>
+          <div><dt>Runs</dt><dd>{{ repo.runs }}</dd></div>
+          <div><dt>Success</dt><dd>{{ rate(repo) === null ? '–' : rate(repo) + '%' }}</dd></div>
+          <div><dt>Last run</dt><dd>{{ relativeTime(repo.latest.createdAt, now()) }}</dd></div>
         </dl>
-
         <footer>
           <a class="btn ghost sm" [routerLink]="['/runs', repo.latest.id]">Latest run <bs-icon name="chevronRight" [size]="14" /></a>
           <button type="button" class="btn secondary sm" (click)="runAgain(repo)"
