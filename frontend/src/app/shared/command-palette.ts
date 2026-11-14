@@ -4,12 +4,14 @@ import {
   Component,
   ElementRef,
   computed,
+  effect,
   inject,
   signal,
   viewChild,
 } from '@angular/core';
 import { Router } from '@angular/router';
 
+import { PaletteControl } from '../core/palette-control';
 import { REPOSITORY_PATTERN } from '../core/validation';
 import { RunsApi } from '../core/runs-api';
 import { RunsStore } from '../core/runs-store';
@@ -43,6 +45,21 @@ export class CommandPalette {
   private readonly dialog = viewChild.required<ElementRef<HTMLDialogElement>>('dialog');
   private readonly input = viewChild.required<ElementRef<HTMLInputElement>>('input');
 
+  private readonly control = inject(PaletteControl);
+
+  constructor() {
+    // Open on every request after the initial value.
+    let first = true;
+    effect(() => {
+      this.control.openRequests();
+      if (first) {
+        first = false;
+        return;
+      }
+      this.open();
+    });
+  }
+
   protected readonly query = signal('');
   protected readonly selected = signal(0);
 
@@ -63,7 +80,7 @@ export class CommandPalette {
     }
 
     const pages: Command[] = [
-      { id: 'overview', label: 'Overview', hint: 'Runs and live status', icon: 'overview', group: 'Go to', run: () => this.go(['/']) },
+      { id: 'overview', label: 'Overview', hint: 'Runs and live status', icon: 'overview', group: 'Go to', run: () => this.go(['/overview']) },
       { id: 'new', label: 'New run', hint: 'N', icon: 'plus', group: 'Go to', run: () => this.go(['/new']) },
       { id: 'repos', label: 'Repositories', hint: 'From your runs', icon: 'repo', group: 'Go to', run: () => this.go(['/repositories']) },
       { id: 'settings', label: 'Settings', hint: 'Theme and API', icon: 'settings', group: 'Go to', run: () => this.go(['/settings']) },

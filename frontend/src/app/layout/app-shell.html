@@ -1,8 +1,6 @@
-<a class="skip" href="#main">Skip to content</a>
-
 <div class="shell" [class.nav-open]="navOpen()">
   <aside class="sidebar" aria-label="Sidebar">
-    <a routerLink="/" class="brand" aria-label="Bootshift overview">
+    <a routerLink="/" class="brand" aria-label="Bootshift home">
       <svg class="mark" viewBox="0 0 24 24" aria-hidden="true">
         <rect width="24" height="24" rx="6" />
         <path d="M7 15.5 12 10.5l5 5M7 10 12 5l5 5" />
@@ -13,7 +11,7 @@
       </span>
     </a>
 
-    <button type="button" class="search-trigger" (click)="openPalette()">
+    <button type="button" class="search-trigger" (click)="palette.open()">
       <bs-icon name="search" [size]="16" />
       <span>Search or jump to…</span>
       <kbd>Ctrl K</kbd>
@@ -21,11 +19,11 @@
 
     <nav aria-label="Main">
       @for (item of nav; track item.path) {
-        <a [routerLink]="item.path" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
+        <a [routerLink]="item.path" routerLinkActive="active"
            #rla="routerLinkActive" [attr.aria-current]="rla.isActive ? 'page' : null">
           <bs-icon [name]="item.icon" [size]="18" />
           <span>{{ item.label }}</span>
-          @if (item.path === '/' && store.active().length > 0) {
+          @if (item.path === '/overview' && store.active().length > 0) {
             <span class="live-count" [attr.aria-label]="store.active().length + ' running'">
               <span class="pulse" aria-hidden="true"></span>{{ store.active().length }}
             </span>
@@ -66,7 +64,7 @@
 
       <div class="spacer"></div>
 
-      <button type="button" class="btn icon" (click)="openPalette()" aria-label="Open command palette" title="Command palette (Ctrl K)">
+      <button type="button" class="btn icon" (click)="palette.open()" aria-label="Open command palette" title="Command palette (Ctrl K)">
         <bs-icon name="command" />
       </button>
       <button type="button" class="btn icon" (click)="theme.cycle()" [attr.aria-label]="'Theme: ' + theme.choice()"
@@ -85,5 +83,3 @@
   </div>
 </div>
 
-<bs-command-palette />
-<bs-toast-host />
