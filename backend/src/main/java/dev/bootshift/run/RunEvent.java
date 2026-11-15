@@ -13,6 +13,8 @@ public record RunEvent(long id, UUID runId, String type, JsonNode payload, Insta
     public static final String LOG = "LOG";
     public static final String CANCEL_REQUESTED = "CANCEL_REQUESTED";
     public static final String RECOVERED = "RECOVERED";
+    /** A sandbox build finished; the payload summarizes its {@code build_result}. */
+    public static final String BUILD_FINISHED = "BUILD_FINISHED";
 
     /** True for the event that moves a run into a terminal state; nothing follows it. */
     public boolean isFinal() {

@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import dev.bootshift.build.BuildResultStore;
 import dev.bootshift.repo.RepositoryName;
 import dev.bootshift.run.Run;
 import dev.bootshift.run.RunService;
@@ -31,9 +32,11 @@ class RunController {
     private static final int MAX_KEY_LENGTH = 200;
 
     private final RunService runs;
+    private final BuildResultStore builds;
 
-    RunController(RunService runs) {
+    RunController(RunService runs, BuildResultStore builds) {
         this.runs = runs;
+        this.builds = builds;
     }
 
     @PostMapping(version = ApiVersionConfig.V1)
@@ -58,6 +61,13 @@ class RunController {
     @GetMapping(path = "/{id}", version = ApiVersionConfig.V1)
     Run get(@PathVariable UUID id) {
         return runs.get(id);
+    }
+
+    /** The run's sandbox builds, oldest first, with their failures. */
+    @GetMapping(path = "/{id}/builds", version = ApiVersionConfig.V1)
+    List<BuildResultStore.StoredBuild> builds(@PathVariable UUID id) {
+        runs.get(id);
+        return builds.list(id);
     }
 
     @PostMapping(path = "/{id}/cancel", version = ApiVersionConfig.V1)

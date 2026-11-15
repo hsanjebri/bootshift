@@ -103,6 +103,15 @@ class RunStore {
                 .update() == 1;
     }
 
+    /** Records the commit the run started from and the JDK its builds use. Null leaves a value unchanged. */
+    void recordDetails(UUID id, @Nullable String sourceSha, @Nullable Integer jdk) {
+        jdbc.sql("UPDATE run SET source_sha = coalesce(:sha, source_sha), jdk = coalesce(:jdk, jdk) WHERE id = :id")
+                .param("id", id)
+                .param("sha", sourceSha)
+                .param("jdk", jdk == null ? null : String.valueOf(jdk))
+                .update();
+    }
+
     /** Flags a non-terminal run for cancellation. Returns false if it is already terminal. */
     boolean requestCancel(UUID id) {
         return jdbc.sql("UPDATE run SET cancel_requested = TRUE WHERE id = :id AND status NOT IN (:terminal)")

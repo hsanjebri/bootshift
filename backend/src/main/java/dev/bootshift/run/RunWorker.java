@@ -119,7 +119,7 @@ class RunWorker implements SmartLifecycle {
 
     private void process(UUID id) {
         Run run = store.findById(id).orElseThrow();
-        RunContext context = new RunContext(id, run.repository(), RunState.CLONING, store, writer, events);
+        RunContext context = new RunContext(id, run.repository(), run.branch(), RunState.CLONING, store, writer, events);
         try {
             pipeline.execute(context);
             if (!context.state().isTerminal()) {

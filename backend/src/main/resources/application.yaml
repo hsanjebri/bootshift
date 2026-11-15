@@ -46,6 +46,20 @@ bootshift:
     poll-interval: 500ms
     worker-enabled: true
   pipeline:
-    # Phase 1 only has the fake pipeline. It moves a run through every stage without touching Git, Docker or a model.
-    mode: fake
+    # fake: every stage is simulated; needs no Docker or GitHub (the default).
+    # real: clones and runs the baseline build in the sandbox; later stages are simulated until Phases 3 to 5.
+    mode: ${BOOTSHIFT_PIPELINE_MODE:fake}
     fake-step-delay: 800ms
+  workspace:
+    # Working copies (deleted when a run ends) and build logs. Keep it out of synced folders such as OneDrive.
+    root: ${BOOTSHIFT_WORKSPACE:${java.io.tmpdir}/bootshift}
+  sandbox:
+    # Build it with: docker build -t bootshift-sandbox:dev sandbox
+    image: ${BOOTSHIFT_SANDBOX_IMAGE:bootshift-sandbox:dev}
+    # Internal network from deploy/compose.dev.yaml; Bootshift refuses to build on a network with internet access.
+    network: bootshift-sandbox
+    maven-mirror: http://reposilite:8080/releases
+    memory: 4GB
+    cpus: 2
+    pids-limit: 512
+    build-timeout: 20m

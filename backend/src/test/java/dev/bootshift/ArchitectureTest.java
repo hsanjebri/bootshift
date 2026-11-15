@@ -26,6 +26,19 @@ class ArchitectureTest {
             noClasses().that().resideInAPackage("dev.bootshift.repo..")
                     .should().dependOnClassesThat().resideInAPackage("dev.bootshift.run..");
 
+    /** README section 5: the sandbox never receives secrets, so it cannot see GitHub credentials code. */
+    @ArchTest
+    static final ArchRule sandboxAndBuildDoNotKnowGitHub =
+            noClasses().that().resideInAnyPackage("dev.bootshift.sandbox..", "dev.bootshift.build..")
+                    .should().dependOnClassesThat().resideInAPackage("dev.bootshift.github..");
+
+    /** Building blocks stay independent of the run lifecycle; only the pipeline wires them together. */
+    @ArchTest
+    static final ArchRule buildingBlocksDoNotKnowAboutRuns =
+            noClasses().that().resideInAnyPackage("dev.bootshift.sandbox..", "dev.bootshift.build..", "dev.bootshift.git..",
+                            "dev.bootshift.workspace..")
+                    .should().dependOnClassesThat().resideInAnyPackage("dev.bootshift.run..", "dev.bootshift.pipeline..");
+
     @ArchTest
     static final ArchRule noJackson2 =
             noClasses().should().dependOnClassesThat().resideInAPackage("com.fasterxml.jackson.databind..");
