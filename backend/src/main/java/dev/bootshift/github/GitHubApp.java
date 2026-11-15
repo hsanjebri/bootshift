@@ -94,6 +94,28 @@ public class GitHubApp {
                 .findFirst();
     }
 
+    /** True when an App ID and private key are configured. */
+    public boolean configured() {
+        return properties.configured();
+    }
+
+    /**
+     * A fresh token that can only read the contents of one repository, for cloning (README section
+     * 13). It is not cached and expires within an hour; callers must not store it.
+     *
+     * @throws GitHubNotConfigured if no app is configured
+     * @throws RepositoryNotVisible if the app is not installed on the repository
+     */
+    public String cloneToken(String owner, String name) {
+        GitHubRepository repository = find(owner, name).orElseThrow(() -> new RepositoryNotVisible(owner + "/" + name));
+        try {
+            return api.createScopedToken(appBearer(), repository.installationId(),
+                    new GitHubApi.TokenScope(List.of(repository.name()), Map.of("contents", "read"))).token();
+        } catch (RestClientException e) {
+            throw new GitHubUnavailable(describe(e), e);
+        }
+    }
+
     String installationToken(long installationId) {
         GitHubApi.AccessToken cached = tokens.get(installationId);
         if (cached != null && Instant.now(clock).isBefore(cached.expiresAt().minus(TOKEN_MARGIN))) {
@@ -139,6 +161,12 @@ public class GitHubApp {
     public static final class GitHubNotConfigured extends RuntimeException {
         public GitHubNotConfigured() {
             super("No GitHub App is configured. Set bootshift.github.app-id and bootshift.github.private-key-path.");
+        }
+    }
+
+    public static final class RepositoryNotVisible extends RuntimeException {
+        public RepositoryNotVisible(String repository) {
+            super("The GitHub App is not installed on " + repository);
         }
     }
 

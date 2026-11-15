@@ -2,12 +2,14 @@ package dev.bootshift.github;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.service.annotation.GetExchange;
@@ -29,10 +31,19 @@ public interface GitHubApi {
     @PostExchange("/app/installations/{id}/access_tokens")
     AccessToken createInstallationToken(@RequestHeader("Authorization") String bearerJwt, @PathVariable long id);
 
+    /** A token limited to some repositories and permissions; never cached. */
+    @PostExchange("/app/installations/{id}/access_tokens")
+    AccessToken createScopedToken(@RequestHeader("Authorization") String bearerJwt, @PathVariable long id,
+                                  @RequestBody TokenScope scope);
+
     @GetExchange("/installation/repositories")
     InstallationRepositories repositories(@RequestHeader("Authorization") String bearerToken,
                                           @RequestParam("per_page") int perPage,
                                           @RequestParam int page);
+
+    /** Body of a scoped token request, for example one repository with {@code contents: read}. */
+    record TokenScope(List<String> repositories, Map<String, String> permissions) {
+    }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     record Installation(long id, Account account, @JsonProperty("repository_selection") String repositorySelection) {
