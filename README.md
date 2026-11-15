@@ -4,16 +4,21 @@
 
 You point Bootshift at a Maven repo. It records how the project behaves today, runs the OpenRewrite recipes, uses an AI agent to fix what still fails, and opens a PR that explains every change.
 
-> **Status:** Phase 0 (prove the idea) in progress. There is no Bootshift server yet. What exists today:
-> three Boot 3.5 fixtures, a script that runs them through baseline → OpenRewrite → verify, a pinned
-> 4.0 → 4.1 recipe step, and a migration playbook checked against the official guide and the real
-> Boot 4.1.2 jars. Findings are in [`docs/phase-0.md`](docs/phase-0.md). Update this section as phases
-> ship, and never claim a feature or benchmark before it exists.
+> **Status:** Phases 1 and 2 done. Bootshift has a server, a live dashboard and a
+> GitHub App connection with a repository allowlist. In `real` mode it clones a repository and runs
+> its **baseline build in a locked-down sandbox container**, then records test results and
+> fingerprinted failures. Scanning, recipes, the repair agent and pull requests are **not built
+> yet**: those stages are simulated and labelled `[simulated]`. Update this section as phases ship,
+> and never claim a feature or benchmark before it exists.
 >
 > | Phase | State |
 > |---|---|
-> | 0. Prove the idea | In progress: fixtures, recipe runs and playbook done; raw-model repair test and Docker-mode run open |
-> | 1–11 | Not started |
+> | 0. Prove the idea | Mostly done ([`docs/phase-0.md`](docs/phase-0.md)); raw-model repair test open |
+> | 1. Skeleton | Done |
+> | 2. Sandbox and build | Done ([`docs/phase-2.md`](docs/phase-2.md)) |
+> | 5. Pull requests | GitHub App connection and allowlist pulled forward; no pushes or PRs yet |
+> | 6. Dashboard | Largely pulled forward; no login yet |
+> | 3, 4, 7–11 | Not started |
 
 ---
 
@@ -434,11 +439,11 @@ run          id, repository_id, status, stage, source_sha, branch, pr_url, is_dr
              tokens_in, tokens_out, cost_estimate, failure_reason,
              created_by, created_at, started_at, finished_at
 
-build_result id, run_id, kind(BASELINE|RECIPE|REPAIR|FINAL), iteration, exit_code,
-             tests_run, tests_failed, tests_skipped, duration_ms, log_path
+build_result id, run_id, kind(BASELINE|RECIPE|REPAIR|FINAL), iteration, outcome, exit_code, jdk,
+             tests_run, tests_failed, tests_skipped, duration_ms, log_path, log_truncated
 
 failure      id, build_result_id, fingerprint, type(COMPILE|TEST|DEPENDENCY|STARTUP|OTHER),
-             module, file, line, message, is_new
+             module, file, line, symbol, message, is_new
 
 iteration    id, run_id, number, status, summary, tokens_in, tokens_out,
              failures_before, failures_after
