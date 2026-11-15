@@ -20,8 +20,9 @@ public final class MavenLog {
     // [ERROR] /workspace/app/src/main/java/a/B.java:[12,34] cannot find symbol
     private static final Pattern COMPILE = Pattern.compile(
             "^\\[ERROR] (?:/workspace/)?(\\S+?\\.(?:java|kt|groovy|scala)):\\[(\\d+)(?:,\\d+)?] (.+)$");
-    // [ERROR]   symbol:   class AntPathRequestMatcher
-    private static final Pattern SYMBOL = Pattern.compile("^\\[ERROR]\\s+symbol:\\s+(.+)$");
+    // "[ERROR]   symbol:   class X" in Maven's summary; "  symbol:   class X", without the prefix,
+    // in the compiler's own section.
+    private static final Pattern SYMBOL = Pattern.compile("^(?:\\[ERROR])?\\s+symbol:\\s+(.+)$");
     private static final Pattern DEPENDENCY = Pattern.compile(
             "Could not resolve dependencies|Non-resolvable parent POM|Non-resolvable import POM|Could not transfer artifact"
                     + "|Could not find artifact|Plugin .+ or one of its dependencies could not be resolved|Unresolveable build extension");

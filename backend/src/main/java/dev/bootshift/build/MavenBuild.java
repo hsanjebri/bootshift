@@ -51,10 +51,9 @@ public class MavenBuild {
         List<String> errors = new ArrayList<>();
         Sandbox.Command command = new Sandbox.Command(runId, kind.name().toLowerCase(), repository, jdk, VERIFY,
                 properties.buildTimeout(), logFile);
+        ErrorLines errorLines = new ErrorLines(errors);
         Sandbox.Result result = sandbox.run(command, line -> {
-            if (line.startsWith("[ERROR]") && errors.size() < MAX_ERROR_LINES) {
-                errors.add(line);
-            }
+            errorLines.accept(line);
             if (isProgress(line)) {
                 progress.accept(line);
             }
@@ -70,6 +69,28 @@ public class MavenBuild {
         failures.addAll(tests.failures());
         return new BuildReport(kind, jdk, result.outcome(), result.exitCode(), result.duration(),
                 tests.run(), tests.failed(), tests.skipped(), failures, result.logFile(), result.logTruncated());
+    }
+
+    /**
+     * Keeps {@code [ERROR]} lines and the indented lines right after them: in the compiler's own
+     * section, javac's "  symbol:" and "  location:" lines have no level prefix.
+     */
+    static final class ErrorLines implements Consumer<String> {
+
+        private final List<String> lines;
+        private boolean inError;
+
+        ErrorLines(List<String> lines) {
+            this.lines = lines;
+        }
+
+        @Override
+        public void accept(String line) {
+            inError = line.startsWith("[ERROR]") || (inError && line.startsWith("  "));
+            if (inError && lines.size() < MAX_ERROR_LINES) {
+                lines.add(line);
+            }
+        }
     }
 
     static boolean isProgress(String line) {

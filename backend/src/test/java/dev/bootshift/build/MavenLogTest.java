@@ -16,8 +16,9 @@ class MavenLogTest {
                 "[INFO] -------------------------------------------------------------",
                 "[ERROR] /workspace/api/src/main/java/dev/x/SecurityConfig.java:[8,58] package org.springframework.security.web.util.matcher does not exist",
                 "[ERROR] /workspace/api/src/main/java/dev/x/SecurityConfig.java:[21,40] cannot find symbol",
-                "[ERROR]   symbol:   class AntPathRequestMatcher",
-                "[ERROR]   location: class dev.x.SecurityConfig",
+                // In the compiler's own section the detail lines have no level prefix.
+                "  symbol:   class AntPathRequestMatcher",
+                "  location: class dev.x.SecurityConfig",
                 "[INFO] 2 errors ",
                 // Maven repeats the errors in its summary.
                 "[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.14.1:compile (default-compile) on project api: Compilation failure: Compilation failure: ",

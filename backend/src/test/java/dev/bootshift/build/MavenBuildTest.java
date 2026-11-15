@@ -74,6 +74,22 @@ class MavenBuildTest {
     }
 
     @Test
+    void keepsErrorLinesAndTheirUnprefixedDetails() {
+        List<String> kept = new ArrayList<>();
+        MavenBuild.ErrorLines errors = new MavenBuild.ErrorLines(kept);
+        List.of("[INFO] Compiling 3 source files",
+                "  indented but not after an error",
+                "[ERROR] /workspace/src/main/java/A.java:[4,5] cannot find symbol",
+                "  symbol:   class DoesNotExist",
+                "  location: class A",
+                "[INFO] 1 error",
+                "  also not after an error").forEach(errors);
+
+        assertThat(kept).containsExactly("[ERROR] /workspace/src/main/java/A.java:[4,5] cannot find symbol",
+                "  symbol:   class DoesNotExist", "  location: class A");
+    }
+
+    @Test
     void showsOnlyUsefulProgressLines() {
         assertThat(MavenBuild.isProgress("[INFO] Building api 1.0-SNAPSHOT  [2/3]")).isTrue();
         assertThat(MavenBuild.isProgress("[INFO] Building jar: /workspace/target/x.jar")).isFalse();
