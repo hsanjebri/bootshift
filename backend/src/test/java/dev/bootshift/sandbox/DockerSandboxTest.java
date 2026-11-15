@@ -72,10 +72,18 @@ class DockerSandboxTest {
                 + " echo hi > /workspace/probe && echo workspace-writable; echo hi > /m2/probe && echo cache-writable;"
                 + " echo hi > /tmp/probe && echo tmp-writable; grep CapEff /proc/self/status");
 
+        // The working copy's owner on Linux (the CI runner is 1001), 1000 on Docker Desktop for Windows.
+        String[] user = DockerSandbox.user(workspace).split(":");
+        assertThat(user[0]).isNotEqualTo("0");
         assertThat(out.result().succeeded()).isTrue();
-        assertThat(out.lines()).startsWith("1000", "1000", "root-read-only", "workspace-writable", "cache-writable", "tmp-writable");
+        assertThat(out.lines()).startsWith(user[0], user[1], "root-read-only", "workspace-writable", "cache-writable", "tmp-writable");
         assertThat(out.lines()).contains("CapEff:\t0000000000000000");
         assertThat(workspace.resolve("probe")).hasContent("hi");
+    }
+
+    @Test
+    void neverRunsAsRoot() {
+        assertThat(DockerSandbox.user(workspace)).doesNotStartWith("0:");
     }
 
     @Test
@@ -95,7 +103,7 @@ class DockerSandboxTest {
 
         Set<String> names = out.lines().stream().takeWhile(l -> !l.endsWith("socket")).collect(Collectors.toSet());
         // Only what DockerSandbox sets plus the image's own defaults; nothing from the server's environment.
-        assertThat(names).isSubsetOf("JAVA_HOME", "PATH", "HOME", "MAVEN_CONFIG", "BOOTSHIFT_MAVEN_MIRROR", "HOSTNAME",
+        assertThat(names).isSubsetOf("JAVA_HOME", "PATH", "HOME", "MAVEN_CONFIG", "MAVEN_OPTS", "BOOTSHIFT_MAVEN_MIRROR", "HOSTNAME",
                 "LANG", "LANGUAGE", "LC_ALL", "JAVA_VERSION", "MAVEN_HOME", "USER_HOME_DIR", "PWD", "SHLVL", "_");
         assertThat(names).noneMatch(n -> n.matches("(?i).*(TOKEN|SECRET|PASSWORD|KEY|GITHUB|_DB_).*"));
         assertThat(out.lines()).contains("no-socket");

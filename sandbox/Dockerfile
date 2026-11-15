@@ -17,9 +17,13 @@ COPY --from=jdk17 /opt/java/openjdk /opt/jdk/17
 COPY --from=jdk21 /opt/java/openjdk /opt/jdk/21
 # uid 1000 is the base image's "ubuntu" user. Java takes user.home from /etc/passwd, not $HOME,
 # so its home moves to the writable /tmp; tools such as JGit write config files there.
+#
+# Bootshift runs builds as the uid that owns the working copy (1000 in production), so /m2 is
+# writable by any uid. Each run gets its own /m2 volume, created from this directory.
 RUN ln -s /opt/java/openjdk /opt/jdk/25 \
  && mkdir -p /workspace /m2 \
  && chown 1000:1000 /workspace /m2 \
+ && chmod 1777 /m2 \
  && usermod --home /tmp ubuntu
 
 # Replaces Maven's global settings: one mirror for every repository, and the cache in /m2.

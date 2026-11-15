@@ -49,7 +49,8 @@ cd backend && BOOTSHIFT_PIPELINE_MODE=real ./mvnw spring-boot:run
 Without a GitHub App, only public repositories can be cloned. Each build runs in a new container
 that:
 
-- runs as uid 1000 with no capabilities, `no-new-privileges` and a read-only root;
+- runs as the non-root user that owns the working copy (1000 where ownership does not apply),
+  with no capabilities, `no-new-privileges` and a read-only root;
 - sees only the run's working copy (`/workspace`), its own Maven cache volume (`/m2`) and a tmpfs;
 - has 4 GB of memory, 2 CPUs, 512 processes and 20 minutes;
 - is on the internal `bootshift-sandbox` network, where the only way out is the Reposilite proxy

@@ -569,7 +569,7 @@ Use Angular 22 with standalone components, signals and no NgRx.
 ### Sandbox container settings
 
 ```text
---user 1000:1000
+--user <owner of the working copy>   (never root; 1000 in the production image)
 --cap-drop ALL
 --security-opt no-new-privileges
 --read-only, with tmpfs for /tmp

@@ -38,6 +38,7 @@ public class DockerSandbox implements Sandbox {
 
     static final String LABEL = "dev.bootshift.sandbox";
     static final String RUN_LABEL = "dev.bootshift.run";
+    static final String DEFAULT_USER = "1000:1000";
 
     private static final Logger log = LoggerFactory.getLogger(DockerSandbox.class);
     private static final Duration POLL = Duration.ofSeconds(1);
@@ -163,7 +164,7 @@ public class DockerSandbox implements Sandbox {
         try {
             return docker.createContainerCmd(properties.image())
                     .withName("bootshift-" + command.runId().toString().substring(0, 8) + "-" + command.name() + "-" + shortId())
-                    .withUser("1000:1000")
+                    .withUser(user(command.workspace()))
                     .withWorkingDir("/workspace")
                     .withEnv(environment(command.jdk()))
                     .withCmd(command.argv())
@@ -188,6 +189,8 @@ public class DockerSandbox implements Sandbox {
                 "PATH=" + javaHome + "/bin:" + PATH,
                 "HOME=/tmp",
                 "MAVEN_CONFIG=",
+                // The build may run as a uid without a passwd entry, where Java would set user.home to "?".
+                "MAVEN_OPTS=-Duser.home=/tmp",
                 "BOOTSHIFT_MAVEN_MIRROR=" + properties.mavenMirror());
     }
 
@@ -240,6 +243,27 @@ public class DockerSandbox implements Sandbox {
 
     static String cacheName(UUID runId) {
         return "bootshift-m2-" + runId;
+    }
+
+    /**
+     * The container's user: never root. On Linux and macOS it is the owner of the working copy, so
+     * the build can write to it whatever uid the server runs as (1000 in the production image).
+     * Where ownership does not apply, as with Docker Desktop on Windows, it is 1000, the image's user.
+     */
+    static String user(java.nio.file.Path workspace) {
+        try {
+            Object uid = Files.getAttribute(workspace, "unix:uid", java.nio.file.LinkOption.NOFOLLOW_LINKS);
+            Object gid = Files.getAttribute(workspace, "unix:gid", java.nio.file.LinkOption.NOFOLLOW_LINKS);
+            if (uid instanceof Integer u && gid instanceof Integer g && u != 0) {
+                return u + ":" + (g == 0 ? u : g);
+            }
+            if (Integer.valueOf(0).equals(uid)) {
+                log.warn("The working copy {} is owned by root; builds run as 1000:1000 and may not be able to write to it", workspace);
+            }
+        } catch (UnsupportedOperationException | IllegalArgumentException | IOException e) {
+            // No POSIX ownership on this filesystem.
+        }
+        return DEFAULT_USER;
     }
 
     private static String shortId() {
