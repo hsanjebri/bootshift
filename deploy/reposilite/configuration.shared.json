@@ -1,0 +1,35 @@
+{
+  "maven": {
+    "repositories": [
+      {
+        "id": "releases",
+        "visibility": "PUBLIC",
+        "redeployment": false,
+        "preserveSnapshots": false,
+        "storageProvider": {
+          "type": "fs",
+          "quota": "100%",
+          "mount": "",
+          "filePermissions": "600"
+        },
+        "storagePolicy": "PRIORITIZE_UPSTREAM_METADATA",
+        "metadataMaxAge": 3600,
+        "resolutionCacheMaxEntries": 2048,
+        "proxied": [
+          {
+            "reference": "https://repo.maven.apache.org/maven2/",
+            "store": true,
+            "connectTimeout": 5,
+            "readTimeout": 30
+          }
+        ],
+        "parallelMetadataLookup": false,
+        "resolutionCacheLevel": "NEGATIVE_CACHING"
+      }
+    ]
+  },
+  "statistics": {
+    "enabled": false,
+    "resolvedRequestsInterval": "MONTHLY"
+  }
+}

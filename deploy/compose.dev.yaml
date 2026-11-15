@@ -1,6 +1,7 @@
 # Local development services. The backend and frontend run on the host (see docs/development.md).
 #
-#   docker compose -f deploy/compose.dev.yaml up -d                          # Postgres only
+#   docker compose -f deploy/compose.dev.yaml up -d                          # Postgres and the Maven proxy
+#   docker compose -f deploy/compose.dev.yaml up -d reposilite               # Only the Maven proxy (real pipeline)
 #   docker compose -f deploy/compose.dev.yaml --profile observability up -d  # + Grafana LGTM
 #
 # Credentials here are local-only defaults and match backend/src/main/resources/application.yaml.
@@ -36,5 +37,29 @@ services:
       - "127.0.0.1:4317:4317"
       - "127.0.0.1:4318:4318"
 
+  # Dependency proxy for sandbox builds (README section 13). Builds run on the internal
+  # "bootshift-sandbox" network, which has no route out; Reposilite is the only service on it that
+  # can also reach the internet, and it only proxies Maven Central.
+  reposilite:
+    image: dzikoysk/reposilite:3.6.6
+    environment:
+      REPOSILITE_OPTS: "--shared-configuration=/etc/reposilite/configuration.shared.json --no-color"
+      JAVA_OPTS: "-Xmx256m"
+    volumes:
+      - ./reposilite/configuration.shared.json:/etc/reposilite/configuration.shared.json:ro
+      - reposilite-data:/app/data
+    networks:
+      - sandbox
+      - egress
+
+networks:
+  # Internal: containers on it reach each other but nothing else. Bootshift refuses to build otherwise.
+  sandbox:
+    name: bootshift-sandbox
+    internal: true
+  egress:
+    name: bootshift-egress
+
 volumes:
   postgres-data:
+  reposilite-data:
