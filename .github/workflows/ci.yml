@@ -27,7 +27,10 @@ jobs:
           distribution: temurin
           java-version: "25"
           cache: maven
-      # Unit, ArchUnit and API tests. API tests start Postgres with Testcontainers.
+      # The sandbox tests (DockerSandboxTest) run against this image and fail in CI without it.
+      - name: Build sandbox image
+        run: docker build -t bootshift-sandbox:dev ../sandbox
+      # Unit, ArchUnit, sandbox and API tests. API tests start Postgres with Testcontainers.
       - run: ./mvnw -B -ntp verify
       - name: Upload test reports
         if: failure()
