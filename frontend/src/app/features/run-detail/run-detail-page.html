@@ -80,10 +80,52 @@
     }
     @if (timeline().result === 'PR_OPENED') {
       <p class="result success">
-        Pull request opened <span class="muted">(simulated in Phase 1; real PRs arrive in Phase 5)</span>
+        Pull request opened <span class="muted">(simulated; real PRs arrive in Phase 5)</span>
       </p>
     }
   </section>
+
+  @if (baseline(); as b) {
+    <section class="card build" aria-labelledby="baseline-title">
+      <div class="card-head">
+        <h2 id="baseline-title">{{ buildLabels[b.kind] }}</h2>
+        <span class="muted mono build-meta">JDK {{ b.jdk }} · {{ (b.durationMs / 1000).toFixed(0) }}s</span>
+      </div>
+      @if (b.outcome === 'TIMED_OUT') {
+        <p class="error" role="alert">The build was stopped at the time limit.</p>
+      } @else if (b.outcome === 'CANCELLED') {
+        <p class="muted">The build was stopped because the run was cancelled.</p>
+      }
+      <dl class="stats">
+        <div><dt>Tests run</dt><dd>{{ b.testsRun }}</dd></div>
+        <div [class.bad]="b.testsFailed > 0"><dt>Failing</dt><dd>{{ b.testsFailed }}</dd></div>
+        <div><dt>Skipped</dt><dd>{{ b.testsSkipped }}</dd></div>
+        <div [class.bad]="b.failures.length > 0"><dt>Problems</dt><dd>{{ b.failures.length }}</dd></div>
+      </dl>
+      @if (baselineFailures().length > 0) {
+        <ul class="failures">
+          @for (f of showAllFailures() ? baselineFailures() : baselineFailures().slice(0, 6); track $index) {
+            <li>
+              <span class="ftype" [attr.data-type]="f.type">{{ failureLabels[f.type] }}</span>
+              <span class="floc mono" [title]="f.file ?? ''">{{ locate(f) }}</span>
+              <span class="fmsg">{{ f.message }}</span>
+            </li>
+          }
+        </ul>
+        @if (baselineFailures().length > 6) {
+          <button type="button" class="btn ghost sm" (click)="showAllFailures.set(!showAllFailures())">
+            {{ showAllFailures() ? 'Show fewer' : 'Show all ' + baselineFailures().length }}
+          </button>
+        }
+        <p class="muted note">Problems that already exist before the upgrade are recorded and do not count against it.</p>
+      } @else if (b.outcome === 'EXITED') {
+        <p class="muted note">The untouched project builds and every test passes.</p>
+      }
+      @if (b.logTruncated) {
+        <p class="muted note">The build log was cut at the size limit.</p>
+      }
+    </section>
+  }
 
   <div class="columns">
     <section class="terminal" aria-labelledby="log-title">
@@ -149,7 +191,7 @@
       <div class="soon">
         <span class="eyebrow">Coming next</span>
         <ul>
-          <li>Baseline vs after test counts <span>Phase 2–3</span></li>
+          <li>Before and after comparison <span>Phase 3</span></li>
           <li>Recipe and agent diff <span>Phase 4</span></li>
           <li>Review by hand <span>Phase 3</span></li>
         </ul>

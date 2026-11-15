@@ -15,6 +15,7 @@ import {
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
+import { BUILD_LABELS, Build, FAILURE_LABELS, describeBuildEvent, locate, sortFailures } from '../../core/build.model';
 import { injectNow } from '../../core/clock';
 import { RunEventStream, RunEvents } from '../../core/run-events';
 import { API, RunsApi } from '../../core/runs-api';
@@ -29,7 +30,7 @@ interface LogLine {
   id: number;
   at: string;
   stage: Stage | null;
-  kind: 'log' | 'notice';
+  kind: 'log' | 'notice' | 'simulated' | 'error';
   text: string;
 }
 
@@ -50,10 +51,19 @@ export class RunDetailPage {
 
   protected readonly run = httpResource<Run>(() => `${API}/runs/${encodeURIComponent(this.id())}`);
   protected readonly stream = signal<RunEventStream | null>(null);
+  protected readonly builds = httpResource<Build[]>(() => `${API}/runs/${encodeURIComponent(this.id())}/builds`, { defaultValue: [] });
 
   protected readonly events = computed(() => this.stream()?.events() ?? []);
   protected readonly timeline = computed(() => buildTimeline(this.events()));
   protected readonly logs = computed(() => toLogLines(this.events()));
+  /** Reloads the builds whenever a build finishes. */
+  private readonly finishedBuilds = computed(() => this.events().filter((e) => e.type === 'BUILD_FINISHED').length);
+  protected readonly baseline = computed(() => this.builds.value().find((b) => b.kind === 'BASELINE') ?? null);
+  protected readonly baselineFailures = computed(() => sortFailures(this.baseline()?.failures ?? []));
+  protected readonly buildLabels = BUILD_LABELS;
+  protected readonly failureLabels = FAILURE_LABELS;
+  protected readonly locate = locate;
+  protected readonly showAllFailures = signal(false);
 
   /** Prefer the live stream's state; fall back to the loaded run before the first event. */
   protected readonly state = computed<RunState | null>(() => this.timeline().current ?? this.run.value()?.status ?? null);
@@ -94,6 +104,9 @@ export class RunDetailPage {
     // Refresh the run details (finished time, final status) once the stream ends.
     effect(() => {
       if (this.stream()?.finished()) untracked(() => this.run.reload());
+    });
+    effect(() => {
+      if (this.finishedBuilds() > 0) untracked(() => this.builds.reload());
     });
     // Keep the newest log line in view while following.
     afterRenderEffect(() => {
@@ -154,8 +167,17 @@ function toLogLines(events: readonly RunEvent[]): LogLine[] {
         ? message
         : event.type === 'CANCEL_REQUESTED'
           ? 'Cancel requested; stopping at the next stage boundary'
-          : JSON.stringify(event.payload);
-    lines.push({ id: event.id, at: event.createdAt, stage, kind: event.type === 'LOG' ? 'log' : 'notice', text });
+          : event.type === 'BUILD_FINISHED'
+            ? describeBuildEvent(event.payload)
+            : JSON.stringify(event.payload);
+    lines.push({ id: event.id, at: event.createdAt, stage, kind: kindOf(event.type, text), text });
   }
   return lines;
+}
+
+function kindOf(type: string, text: string): LogLine['kind'] {
+  if (type !== 'LOG') return 'notice';
+  if (text.startsWith('[simulated]') || text.startsWith('[fake]')) return 'simulated';
+  if (text.startsWith('[ERROR]')) return 'error';
+  return 'log';
 }
