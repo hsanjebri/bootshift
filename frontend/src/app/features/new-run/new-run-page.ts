@@ -54,14 +54,14 @@ export class NewRunPage {
     this.github.allowed().find((r) => r.fullName.toLowerCase() === this.model().repository.trim().toLowerCase()) ?? null,
   );
 
-  /** Repositories from earlier runs, most recent first. Falls back to examples. */
+  /** Repositories from earlier runs, most recent first. Falls back to a public example. */
   protected readonly suggestions = computed(() => {
     const seen = new Set<string>();
     for (const run of this.store.runs.value()) {
       seen.add(run.repository);
       if (seen.size === 5) break;
     }
-    return seen.size ? [...seen] : ['spring-projects/spring-petclinic', 'hsanjebri/demo-app'];
+    return seen.size ? [...seen] : ['spring-projects/spring-petclinic'];
   });
 
   protected readonly steps: Step[] = [

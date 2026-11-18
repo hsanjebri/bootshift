@@ -4,7 +4,7 @@
     <p>Choose which GitHub repositories Bootshift may work on. Runs are refused for anything not on this list.</p>
   </div>
   @if (github.status.value()?.installUrl; as installUrl) {
-    <a class="btn secondary" [href]="installUrl" target="_blank" rel="noopener">
+    <a class="btn secondary" [href]="installUrl">
       <bs-icon name="git" [size]="15" /> {{ github.status.value()?.installations?.length ? 'Change GitHub access' : 'Install on GitHub' }}
     </a>
   }
@@ -16,11 +16,11 @@
     <div>
       <h2>Connect GitHub</h2>
       <p class="muted">
-        Create your own GitHub App and point the backend at it. Bootshift will then list the repositories you install
-        it on, and you allow the ones it may migrate.
+        One click creates a private GitHub App on your account. Install it on the repositories you choose, then allow
+        the ones Bootshift may migrate.
       </p>
     </div>
-    <a routerLink="/settings" class="btn primary">Set up GitHub</a>
+    <bs-github-connect />
   </section>
 } @else {
   <section class="card gh" aria-labelledby="gh-title">

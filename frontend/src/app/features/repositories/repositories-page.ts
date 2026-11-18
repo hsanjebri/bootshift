@@ -9,6 +9,7 @@ import { RunsStore } from '../../core/runs-store';
 import { Run, isTerminal } from '../../core/run.model';
 import { relativeTime } from '../../core/time';
 import { Toasts } from '../../core/toasts';
+import { GitHubConnect } from '../../shared/github-connect';
 import { Icon } from '../../shared/icon';
 import { StatusBadge } from '../../shared/status-badge';
 
@@ -24,7 +25,7 @@ interface RepoSummary {
 /** GitHub repositories with their allowlist switch, plus every repository seen in runs. */
 @Component({
   selector: 'bs-repositories-page',
-  imports: [RouterLink, Icon, StatusBadge],
+  imports: [GitHubConnect, RouterLink, Icon, StatusBadge],
   templateUrl: './repositories-page.html',
   styleUrl: './repositories-page.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
