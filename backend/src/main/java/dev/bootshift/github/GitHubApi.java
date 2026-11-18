@@ -41,8 +41,26 @@ public interface GitHubApi {
                                           @RequestParam("per_page") int perPage,
                                           @RequestParam int page);
 
+    /**
+     * Finishes the manifest flow: GitHub creates the app and returns its ID and private key once.
+     * The one-hour code from the redirect is the only authorization.
+     */
+    @PostExchange("/app-manifests/{code}/conversions")
+    ManifestConversion convertManifest(@PathVariable String code);
+
     /** Body of a scoped token request, for example one repository with {@code contents: read}. */
     record TokenScope(List<String> repositories, Map<String, String> permissions) {
+    }
+
+    /** The created app. Client and webhook secrets are not read; Bootshift does not use them. */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    record ManifestConversion(long id, String slug, String name, @JsonProperty("html_url") String htmlUrl,
+                              Account owner, String pem) {
+
+        @Override
+        public String toString() {
+            return "ManifestConversion[id=" + id + ", slug=" + slug + ", owner=" + owner.login() + ", pem=<hidden>]";
+        }
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
