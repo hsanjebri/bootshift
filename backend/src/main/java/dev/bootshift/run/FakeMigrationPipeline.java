@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
  * iteration, without cloning, building or calling a model. Every log line says it is fake.
  */
 @Component
-@ConditionalOnProperty(name = "bootshift.pipeline.mode", havingValue = "fake", matchIfMissing = true)
+@ConditionalOnProperty(name = "bootshift.pipeline.mode", havingValue = "fake")
 class FakeMigrationPipeline implements MigrationPipeline {
 
     private final Duration stepDelay;

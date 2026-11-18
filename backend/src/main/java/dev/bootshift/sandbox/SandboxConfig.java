@@ -16,7 +16,7 @@ import org.springframework.context.event.EventListener;
 
 /** Docker-backed sandbox. Only created for the real pipeline, so fake mode needs no Docker. */
 @Configuration(proxyBeanMethods = false)
-@ConditionalOnProperty(name = "bootshift.pipeline.mode", havingValue = "real")
+@ConditionalOnProperty(name = "bootshift.pipeline.mode", havingValue = "real", matchIfMissing = true)
 class SandboxConfig {
 
     @Bean(destroyMethod = "close")

@@ -51,9 +51,10 @@ bootshift:
     poll-interval: 500ms
     worker-enabled: true
   pipeline:
-    # fake: every stage is simulated; needs no Docker or GitHub (the default).
-    # real: clones and runs the baseline build in the sandbox; later stages are simulated until Phases 3 to 5.
-    mode: ${BOOTSHIFT_PIPELINE_MODE:fake}
+    # real: clones and runs the baseline build in the sandbox (the default). Needs Docker, the sandbox
+    #       image and the Maven proxy; later stages are simulated until Phases 3 to 5.
+    # fake: every stage is simulated; needs no Docker or GitHub. Used by tests and UI work.
+    mode: ${BOOTSHIFT_PIPELINE_MODE:real}
     fake-step-delay: 800ms
   workspace:
     # Working copies (deleted when a run ends) and build logs. Keep it out of synced folders such as OneDrive.

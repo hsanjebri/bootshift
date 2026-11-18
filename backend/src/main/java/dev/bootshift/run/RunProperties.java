@@ -26,11 +26,11 @@ public record RunProperties(@DefaultValue Runs runs, @DefaultValue Pipeline pipe
     }
 
     /**
-     * @param mode          only {@code fake} exists in Phase 1
+     * @param mode          {@code real} (sandbox builds) or {@code fake} (every stage simulated, for tests)
      * @param fakeStepDelay pause between fake stages, so the dashboard has something to watch
      */
     public record Pipeline(
-            @DefaultValue("fake") String mode,
+            @DefaultValue("real") String mode,
             @DefaultValue("800ms") Duration fakeStepDelay) {
     }
 }

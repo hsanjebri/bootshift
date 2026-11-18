@@ -35,7 +35,7 @@ import dev.bootshift.workspace.Workspaces;
  * every log line, until Phases 3 to 5 replace them.
  */
 @Component
-@ConditionalOnProperty(name = "bootshift.pipeline.mode", havingValue = "real")
+@ConditionalOnProperty(name = "bootshift.pipeline.mode", havingValue = "real", matchIfMissing = true)
 class RealMigrationPipeline implements MigrationPipeline {
 
     static final String SIMULATED = "[simulated] ";

@@ -1,6 +1,6 @@
 /**
  * The real migration pipeline: wires Git, the sandbox, builds and GitHub into the run lifecycle.
- * Only created when {@code bootshift.pipeline.mode=real}.
+ * Created unless {@code bootshift.pipeline.mode=fake}.
  */
 @NullMarked
 package dev.bootshift.pipeline;

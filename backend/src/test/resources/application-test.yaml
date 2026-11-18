@@ -16,4 +16,5 @@ bootshift:
   runs:
     poll-interval: 50ms
   pipeline:
+    mode: fake
     fake-step-delay: 0ms

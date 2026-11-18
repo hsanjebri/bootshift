@@ -12,7 +12,7 @@ import dev.bootshift.sandbox.Sandbox;
 import dev.bootshift.sandbox.SandboxProperties;
 
 @Configuration(proxyBeanMethods = false)
-@ConditionalOnProperty(name = "bootshift.pipeline.mode", havingValue = "real")
+@ConditionalOnProperty(name = "bootshift.pipeline.mode", havingValue = "real", matchIfMissing = true)
 class PipelineConfig {
 
     @Bean
