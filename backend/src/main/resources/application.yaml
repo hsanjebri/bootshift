@@ -37,10 +37,15 @@ management:
 
 bootshift:
   github:
-    # Your own GitHub App (docs/github-app.md). Once these are set, runs are limited to allowlisted repositories.
+    # Your own GitHub App (docs/github-app.md). Use Connect GitHub in Settings, which saves the app in
+    # config-dir, or set the three variables below, which win. Once an app is connected, runs are
+    # limited to allowlisted repositories.
     app-id: ${GITHUB_APP_ID:}
     app-slug: ${GITHUB_APP_SLUG:}
     private-key-path: ${GITHUB_APP_PRIVATE_KEY_PATH:}
+    config-dir: ${BOOTSHIFT_HOME:${user.home}/.bootshift}
+    # The dashboard's address as the browser sees it. Unset, Connect GitHub only works from localhost.
+    dashboard-url: ${BOOTSHIFT_DASHBOARD_URL:}
   runs:
     max-concurrent: 2
     poll-interval: 500ms

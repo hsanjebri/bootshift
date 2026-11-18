@@ -26,19 +26,23 @@ public class GitHubApp {
     private static final int MAX_PAGES = 20;
     private static final Duration TOKEN_MARGIN = Duration.ofMinutes(5);
 
-    private final GitHubProperties properties;
+    private final GitHubCredentials credentials;
     private final GitHubApi api;
     private final Clock clock;
     private final Map<Long, GitHubApi.AccessToken> tokens = new ConcurrentHashMap<>();
-    private volatile @Nullable GitHubAppJwt jwt;
+    /** The signer and the app it was made for; replaced when the app changes. */
+    private volatile @Nullable Signer signer;
 
-    @Autowired
-    public GitHubApp(GitHubProperties properties, GitHubApi api) {
-        this(properties, api, Clock.systemUTC());
+    private record Signer(GitHubCredentials.App app, GitHubAppJwt jwt) {
     }
 
-    GitHubApp(GitHubProperties properties, GitHubApi api, Clock clock) {
-        this.properties = properties;
+    @Autowired
+    public GitHubApp(GitHubCredentials credentials, GitHubApi api) {
+        this(credentials, api, Clock.systemUTC());
+    }
+
+    GitHubApp(GitHubCredentials credentials, GitHubApi api, Clock clock) {
+        this.credentials = credentials;
         this.api = api;
         this.clock = clock;
     }
@@ -46,22 +50,29 @@ public class GitHubApp {
     public record InstallationView(long id, String account, String accountType, String repositorySelection) {
     }
 
-    /** What the dashboard shows in Settings. {@code error} is set when GitHub could not be reached. */
-    public record Status(boolean configured, @Nullable String appSlug, @Nullable String installUrl,
-                         List<InstallationView> installations, @Nullable String error) {
+    /**
+     * What the dashboard shows in Settings. {@code source} is {@code ENVIRONMENT} for an app set
+     * with properties (the dashboard cannot change it) and {@code CONNECTED} for one made with the
+     * Connect GitHub button. {@code error} is set when GitHub could not be reached.
+     */
+    public record Status(boolean configured, GitHubCredentials.@Nullable Source source, @Nullable String appSlug,
+                         @Nullable String installUrl, @Nullable String appUrl, List<InstallationView> installations,
+                         @Nullable String error) {
     }
 
     public Status status() {
-        if (!properties.configured()) {
-            return new Status(false, properties.appSlug(), properties.installUrl(), List.of(), null);
+        Optional<GitHubCredentials.App> current = credentials.current();
+        if (current.isEmpty()) {
+            return new Status(false, null, null, null, null, List.of(), null);
         }
+        GitHubCredentials.App app = current.get();
         try {
             List<InstallationView> installations = api.installations(appBearer(), PAGE_SIZE).stream()
                     .map(i -> new InstallationView(i.id(), i.account().login(), i.account().type(), i.repositorySelection()))
                     .toList();
-            return new Status(true, properties.appSlug(), properties.installUrl(), installations, null);
+            return new Status(true, app.source(), app.slug(), app.installUrl(), app.htmlUrl(), installations, null);
         } catch (RestClientException | IllegalStateException | IllegalArgumentException e) {
-            return new Status(true, properties.appSlug(), properties.installUrl(), List.of(), describe(e));
+            return new Status(true, app.source(), app.slug(), app.installUrl(), app.htmlUrl(), List.of(), describe(e));
         }
     }
 
@@ -94,9 +105,9 @@ public class GitHubApp {
                 .findFirst();
     }
 
-    /** True when an App ID and private key are configured. */
+    /** True when an app is set with properties or saved by the Connect GitHub button. */
     public boolean configured() {
-        return properties.configured();
+        return credentials.configured();
     }
 
     /**
@@ -127,17 +138,18 @@ public class GitHubApp {
     }
 
     private String appBearer() {
-        GitHubAppJwt signer = jwt;
-        if (signer == null) {
-            requireConfigured();
-            signer = GitHubAppJwt.fromPemFile(properties.appId(), properties.privateKeyPath(), clock);
-            jwt = signer;
+        GitHubCredentials.App app = credentials.current().orElseThrow(GitHubNotConfigured::new);
+        Signer current = signer;
+        if (current == null || !current.app().equals(app)) {
+            tokens.clear();
+            current = new Signer(app, GitHubAppJwt.fromPemFile(app.appId(), app.privateKey(), clock));
+            signer = current;
         }
-        return "Bearer " + signer.create();
+        return "Bearer " + current.jwt().create();
     }
 
     private void requireConfigured() {
-        if (!properties.configured()) {
+        if (!credentials.configured()) {
             throw new GitHubNotConfigured();
         }
     }
@@ -160,7 +172,7 @@ public class GitHubApp {
 
     public static final class GitHubNotConfigured extends RuntimeException {
         public GitHubNotConfigured() {
-            super("No GitHub App is configured. Set bootshift.github.app-id and bootshift.github.private-key-path.");
+            super("GitHub is not connected. Use Connect GitHub in Settings, or set GITHUB_APP_ID and GITHUB_APP_PRIVATE_KEY_PATH.");
         }
     }
 

@@ -25,7 +25,7 @@ class GitHubConfig {
 
     /** Once a GitHub App is connected, runs are limited to allowlisted repositories. */
     @Bean
-    AllowlistPolicy allowlistPolicy(GitHubProperties properties) {
-        return properties::configured;
+    AllowlistPolicy allowlistPolicy(GitHubCredentials credentials) {
+        return credentials::configured;
     }
 }

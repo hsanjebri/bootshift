@@ -7,6 +7,12 @@ spring:
     password: ${BOOTSHIFT_TEST_DB_PASSWORD:bootshift}
 
 bootshift:
+  github:
+    # Never read a GitHub App saved on the developer's machine.
+    app-id:
+    app-slug:
+    private-key-path:
+    config-dir: ${java.io.tmpdir}/bootshift-test-home-${random.uuid}
   runs:
     poll-interval: 50ms
   pipeline:

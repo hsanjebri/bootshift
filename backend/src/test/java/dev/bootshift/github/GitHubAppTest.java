@@ -29,6 +29,8 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.support.RestClientAdapter;
 import org.springframework.web.service.invoker.HttpServiceProxyFactory;
 
+import tools.jackson.databind.json.JsonMapper;
+
 /** GitHubApp against a mocked GitHub REST API. */
 class GitHubAppTest {
 
@@ -49,13 +51,15 @@ class GitHubAppTest {
         server = MockRestServiceServer.bindTo(builder).build();
         GitHubApi api = HttpServiceProxyFactory.builderFor(RestClientAdapter.create(builder.build())).build()
                 .createClient(GitHubApi.class);
-        github = new GitHubApp(new GitHubProperties(42L, "bootshift-test", key, URI.create(API)), api, CLOCK);
+        github = new GitHubApp(credentials(new GitHubProperties(42L, "bootshift-test", key, URI.create(API), tmp, null)),
+                api, CLOCK);
     }
 
     @Test
     void reportsNotConfiguredWithoutCallingGitHub() {
         GitHubApi unused = null;
-        GitHubApp unconfigured = new GitHubApp(new GitHubProperties(null, null, null, URI.create(API)), unused, CLOCK);
+        GitHubApp unconfigured = new GitHubApp(
+                credentials(new GitHubProperties(null, null, null, URI.create(API), tmp.resolve("empty"), null)), unused, CLOCK);
 
         GitHubApp.Status status = unconfigured.status();
 
@@ -72,6 +76,7 @@ class GitHubAppTest {
         GitHubApp.Status status = github.status();
 
         assertThat(status.configured()).isTrue();
+        assertThat(status.source()).isEqualTo(GitHubCredentials.Source.ENVIRONMENT);
         assertThat(status.installUrl()).isEqualTo("https://github.com/apps/bootshift-test/installations/new");
         assertThat(status.installations()).singleElement()
                 .satisfies(i -> assertThat(i.account()).isEqualTo("hsanjebri"));
@@ -106,6 +111,10 @@ class GitHubAppTest {
         assertThatThrownBy(() -> github.repositories())
                 .isInstanceOf(GitHubApp.GitHubUnavailable.class)
                 .hasMessageNotContaining("Bearer");
+    }
+
+    static GitHubCredentials credentials(GitHubProperties properties) {
+        return new GitHubCredentials(properties, JsonMapper.builder().build(), CLOCK);
     }
 
     private static org.springframework.test.web.client.ResponseCreator json(String body) {
