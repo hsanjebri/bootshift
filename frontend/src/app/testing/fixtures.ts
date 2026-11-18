@@ -8,8 +8,10 @@ export const REPOS_URL = '/api/v1/github/repositories';
 export function gitHubStatus(configured: boolean): GitHubStatus {
   return {
     configured,
+    source: configured ? 'CONNECTED' : null,
     appSlug: configured ? 'bootshift-test' : null,
     installUrl: configured ? 'https://github.com/apps/bootshift-test/installations/new' : null,
+    appUrl: configured ? 'https://github.com/apps/bootshift-test' : null,
     installations: configured ? [{ id: 7, account: 'hsanjebri', accountType: 'User', repositorySelection: 'selected' }] : [],
     error: null,
   };
