@@ -1,5 +1,6 @@
 package dev.bootshift.web;
 
+import java.net.URI;
 import java.time.Instant;
 import java.util.List;
 import java.util.Set;
@@ -9,14 +10,21 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 
 import org.jspecify.annotations.Nullable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import dev.bootshift.github.GitHubApp;
+import dev.bootshift.github.GitHubCredentials;
+import dev.bootshift.github.GitHubManifest;
 import dev.bootshift.github.GitHubRepository;
 import dev.bootshift.repo.RepositoryName;
 import dev.bootshift.repo.RepositoryService;
@@ -31,11 +39,23 @@ import dev.bootshift.repo.RepositoryService.AllowedRepository;
 class GitHubController {
 
     private final GitHubApp github;
+    private final GitHubManifest manifest;
+    private final GitHubCredentials credentials;
     private final RepositoryService repositories;
 
-    GitHubController(GitHubApp github, RepositoryService repositories) {
+    GitHubController(GitHubApp github, GitHubManifest manifest, GitHubCredentials credentials,
+                     RepositoryService repositories) {
         this.github = github;
+        this.manifest = manifest;
+        this.credentials = credentials;
         this.repositories = repositories;
+    }
+
+    /**
+     * @param dashboardUrl the dashboard's origin as the browser sees it ({@code window.location.origin})
+     * @param organization create the app under this organization; empty for the user's own account
+     */
+    record ConnectRequest(@Nullable String dashboardUrl, @Nullable String organization) {
     }
 
     /** A repository the app can see, with whether it is allowlisted. */
@@ -49,6 +69,38 @@ class GitHubController {
     @GetMapping(path = "/github/status", version = ApiVersionConfig.V1)
     GitHubApp.Status status() {
         return github.status();
+    }
+
+    /** Starts the Connect GitHub flow. The dashboard posts the returned form to GitHub. */
+    @PostMapping(path = "/github/manifest", version = ApiVersionConfig.V1)
+    GitHubManifest.Form connect(@RequestBody ConnectRequest request) {
+        return manifest.start(request.dashboardUrl(), request.organization());
+    }
+
+    /**
+     * GitHub sends the browser here after the user creates the app. On success the browser goes on
+     * to install the app; on failure, back to Settings.
+     */
+    @GetMapping(path = "/github/manifest/callback", version = ApiVersionConfig.V1)
+    ResponseEntity<Void> connected(@RequestParam(required = false) @Nullable String code,
+                                   @RequestParam(required = false) @Nullable String state) {
+        URI next;
+        try {
+            GitHubManifest.Connected connected = manifest.complete(code, state);
+            next = connected.installUrl() != null
+                    ? URI.create(connected.installUrl())
+                    : URI.create(connected.dashboard() + "/repositories?installed=1");
+        } catch (GitHubManifest.ConnectFailed e) {
+            next = URI.create(e.dashboard() + "/settings?github=failed");
+        }
+        return ResponseEntity.status(HttpStatus.SEE_OTHER).location(next).build();
+    }
+
+    /** Forgets the app saved by Connect GitHub. The app stays on GitHub until its owner deletes it. */
+    @DeleteMapping(path = "/github/app", version = ApiVersionConfig.V1)
+    ResponseEntity<Void> disconnect() {
+        credentials.forget();
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping(path = "/github/repositories", version = ApiVersionConfig.V1)

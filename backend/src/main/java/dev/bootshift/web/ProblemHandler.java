@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import dev.bootshift.github.GitHubApp;
+import dev.bootshift.github.GitHubCredentials;
+import dev.bootshift.github.GitHubManifest;
 import dev.bootshift.run.RunExceptions.IdempotencyKeyReused;
 import dev.bootshift.run.RunExceptions.RepositoryNotAllowed;
 import dev.bootshift.run.RunExceptions.RunAlreadyFinished;
@@ -65,6 +67,21 @@ class ProblemHandler {
     @ExceptionHandler
     ProblemDetail githubUnavailable(GitHubApp.GitHubUnavailable e) {
         return problem(HttpStatus.BAD_GATEWAY, "github-unavailable", "GitHub request failed", e.getMessage());
+    }
+
+    @ExceptionHandler
+    ProblemDetail githubManagedByEnvironment(GitHubCredentials.ManagedByEnvironment e) {
+        return problem(HttpStatus.CONFLICT, "github-managed-by-environment", "GitHub App set by the environment", e.getMessage());
+    }
+
+    @ExceptionHandler
+    ProblemDetail githubConnectInvalid(GitHubManifest.InvalidRequest e) {
+        return problem(HttpStatus.BAD_REQUEST, "invalid-request", "Invalid request", e.getMessage());
+    }
+
+    @ExceptionHandler
+    ProblemDetail githubConnectState(GitHubManifest.InvalidState e) {
+        return problem(HttpStatus.BAD_REQUEST, "github-connect-expired", "GitHub connection not recognized", e.getMessage());
     }
 
     private static ProblemDetail problem(HttpStatus status, String type, String title, String detail) {
