@@ -39,7 +39,7 @@
           }
           <div class="row-actions">
             @if (status.installUrl) {
-              <a class="btn primary sm" [href]="status.installUrl" target="_blank" rel="noopener">
+              <a class="btn primary sm" [href]="status.installUrl">
                 <bs-icon name="git" [size]="14" /> {{ status.installations.length ? 'Change repositories' : 'Install on GitHub' }}
               </a>
             }
@@ -48,20 +48,41 @@
               <bs-icon name="refresh" [size]="14" /> Refresh
             </button>
           </div>
+          @if (status.source === 'CONNECTED') {
+            <div class="row-actions disconnect">
+              @if (confirmingDisconnect()) {
+                <span class="muted">Bootshift forgets the app's key. The app stays on GitHub until you delete it there.</span>
+                <button type="button" class="btn danger sm" (click)="disconnect()" [disabled]="disconnecting()">Disconnect</button>
+                <button type="button" class="btn ghost sm" (click)="confirmingDisconnect.set(false)">Keep</button>
+              } @else {
+                @if (status.appUrl) {
+                  <a class="btn ghost sm" [href]="status.appUrl" target="_blank" rel="noopener">View the app on GitHub</a>
+                }
+                <button type="button" class="btn ghost sm" (click)="confirmingDisconnect.set(true)">Disconnect…</button>
+              }
+            </div>
+          } @else {
+            <p class="muted">Set with <span class="mono">GITHUB_APP_ID</span> on the server; change it there.</p>
+          }
         } @else {
           <div class="status-row" data-status="off">
             <span class="dot" aria-hidden="true"></span>
             <span>Not connected</span>
           </div>
-          <ol class="setup">
-            <li>Create a GitHub App with <strong>Contents</strong> and <strong>Pull requests</strong> read and write, and <strong>Metadata</strong> read.</li>
-            <li>Generate a private key and keep the <span class="mono">.pem</span> outside the repository.</li>
-            <li>Start the backend with these variables, then install the app on your repositories.</li>
-          </ol>
-          <pre class="snippet mono"><code>GITHUB_APP_ID=123456
+          @if (failed()) {
+            <p class="error" role="alert">GitHub did not finish creating the app. Try again; GitHub's link back is valid for one hour.</p>
+          }
+          <p>Bootshift creates a private GitHub App on your account. You confirm it on GitHub, then choose the repositories it may
+            see. It asks for <strong>Contents</strong> and <strong>Pull requests</strong> read and write, and <strong>Metadata</strong> read.</p>
+          <bs-github-connect />
+          <details class="manual">
+            <summary>Set it up by hand instead</summary>
+            <p>Create the app yourself (guide: <span class="mono">docs/github-app.md</span>) and start the backend with:</p>
+            <pre class="snippet mono"><code>GITHUB_APP_ID=123456
 GITHUB_APP_SLUG=your-app-name
 GITHUB_APP_PRIVATE_KEY_PATH=C:\Users\you\.bootshift\github-app.pem</code></pre>
-          <p class="notice"><bs-icon name="info" [size]="16" /><span>Step-by-step guide: <span class="mono">docs/github-app.md</span>. Until GitHub is connected, simulated runs accept any repository name.</span></p>
+          </details>
+          <p class="notice"><bs-icon name="info" [size]="16" /><span>Until GitHub is connected, runs can only clone public repositories, and any repository name is accepted.</span></p>
         }
       } @else if (github.status.error()) {
         <p class="error">Could not load the GitHub status. Is the backend running?</p>

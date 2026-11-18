@@ -300,3 +300,19 @@ kbd {
 .error {
   margin: 0;
 }
+
+.disconnect {
+  align-items: center;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.manual summary {
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.manual[open] summary {
+  margin-bottom: 8px;
+}

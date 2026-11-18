@@ -1,15 +1,17 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
 
 import { GitHub } from '../../core/github';
 
 import { BackendHealth } from '../../core/health';
 import { Theme, ThemeChoice } from '../../core/theme';
+import { Toasts } from '../../core/toasts';
+import { GitHubConnect } from '../../shared/github-connect';
 import { Icon, IconName } from '../../shared/icon';
 
 @Component({
   selector: 'bs-settings-page',
-  imports: [Icon, RouterLink],
+  imports: [GitHubConnect, Icon, RouterLink],
   templateUrl: './settings-page.html',
   styleUrl: './settings-page.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -18,6 +20,29 @@ export class SettingsPage {
   protected readonly theme = inject(Theme);
   protected readonly health = inject(BackendHealth);
   protected readonly github = inject(GitHub);
+  private readonly toasts = inject(Toasts);
+  private readonly router = inject(Router);
+
+  /** Set to "failed" when GitHub's redirect could not be completed (?github=failed). */
+  readonly githubResult = input<string | undefined>(undefined, { alias: 'github' });
+  protected readonly failed = computed(() => this.githubResult() === 'failed');
+
+  protected readonly confirmingDisconnect = signal(false);
+  protected readonly disconnecting = signal(false);
+
+  protected async disconnect(): Promise<void> {
+    this.disconnecting.set(true);
+    try {
+      await this.github.disconnect();
+      this.toasts.show({ tone: 'info', title: 'GitHub disconnected', body: 'Delete the app on GitHub too if you no longer need it.' });
+      void this.router.navigate([], { queryParams: {}, replaceUrl: true });
+    } catch {
+      this.toasts.show({ tone: 'danger', title: 'Could not disconnect GitHub' });
+    } finally {
+      this.disconnecting.set(false);
+      this.confirmingDisconnect.set(false);
+    }
+  }
 
   protected readonly themes: { id: ThemeChoice; label: string; icon: IconName }[] = [
     { id: 'system', label: 'System', icon: 'monitor' },
