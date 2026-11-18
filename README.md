@@ -4,8 +4,8 @@
 
 You point Bootshift at a Maven repo. It records how the project behaves today, runs the OpenRewrite recipes, uses an AI agent to fix what still fails, and opens a PR that explains every change.
 
-> **Status:** Phases 1 and 2 done. Bootshift has a server, a live dashboard and a
-> GitHub App connection with a repository allowlist. In `real` mode it clones a repository and runs
+> **Status:** Phases 1 and 2 done. Bootshift has a server, a live dashboard, a one-click
+> **Connect GitHub** button and a repository allowlist. It clones a repository and runs
 > its **baseline build in a locked-down sandbox container**, then records test results and
 > fingerprinted failures. Scanning, recipes, the repair agent and pull requests are **not built
 > yet**: those stages are simulated and labelled `[simulated]`. Update this section as phases ship,
@@ -16,7 +16,7 @@ You point Bootshift at a Maven repo. It records how the project behaves today, r
 > | 0. Prove the idea | Mostly done ([`docs/phase-0.md`](docs/phase-0.md)); raw-model repair test open |
 > | 1. Skeleton | Done |
 > | 2. Sandbox and build | Done ([`docs/phase-2.md`](docs/phase-2.md)) |
-> | 5. Pull requests | GitHub App connection and allowlist pulled forward; no pushes or PRs yet |
+> | 5. Pull requests | Connect GitHub (app manifest flow) and allowlist pulled forward; no pushes or PRs yet |
 > | 6. Dashboard | Largely pulled forward; no login yet |
 > | 3, 4, 7–11 | Not started |
 
@@ -768,7 +768,7 @@ bootshift:
     allowed-github-users: ${BOOTSHIFT_ALLOWED_USERS}
 ```
 
-Secrets come from the environment or Docker secrets. Never commit them. Each install creates its own GitHub App, with **Contents: read and write**, **Pull requests: read and write**, and **Metadata: read**.
+Secrets come from the environment or Docker secrets. Never commit them. Each install creates its own GitHub App, with **Contents: read and write**, **Pull requests: read and write**, and **Metadata: read**. The dashboard's **Connect GitHub** button creates it with GitHub's app manifest flow and saves the App ID and private key in `~/.bootshift`, readable only by the user running Bootshift; the variables above win when set ([`docs/github-app.md`](docs/github-app.md)).
 
 Check Spring Boot and Spring AI property names against the current docs when implementing, since these change between versions.
 

@@ -2,11 +2,12 @@
 
 The backend has two pipeline modes:
 
-- **`fake`** (the default) simulates every stage. It needs no Docker, GitHub App or model, and
-  exists to work on the queue, the event log and the dashboard.
-- **`real`** clones the repository and runs the **baseline build in the sandbox** (Phase 2). The
-  stages after the baseline are still simulated, and every log line for them starts with
-  `[simulated]`.
+- **`real`** (the default) clones the repository and runs the **baseline build in the sandbox**
+  (Phase 2). The stages after the baseline are still simulated, and every log line for them starts
+  with `[simulated]`.
+- **`fake`** simulates every stage. It needs no Docker, GitHub App or model, and exists for tests
+  and for working on the queue, the event log and the dashboard
+  (`BOOTSHIFT_PIPELINE_MODE=fake`).
 
 ## Requirements
 
@@ -21,30 +22,24 @@ Maven is not needed: use `backend/mvnw`.
 ## Run it
 
 ```bash
-# 1. Postgres
+# 1. Postgres, the Maven proxy and the internal sandbox network
 docker compose -f deploy/compose.dev.yaml up -d
-
-# 2. Backend on http://127.0.0.1:8080
-cd backend && ./mvnw spring-boot:run
-
-# 3. Dashboard on http://localhost:4200 (proxies /api to the backend)
-cd frontend && npm ci && npx ng serve
-```
-
-Open the dashboard, start a run, and watch it stream through every stage.
-
-## Run real baselines (Phase 2)
-
-```bash
-# 1. The Maven proxy and the internal sandbox network
-docker compose -f deploy/compose.dev.yaml up -d reposilite
 
 # 2. The sandbox image: Temurin 17, 21 and 25 with Maven 3.9.16
 docker build -t bootshift-sandbox:dev sandbox
 
-# 3. The backend in real mode
-cd backend && BOOTSHIFT_PIPELINE_MODE=real ./mvnw spring-boot:run
+# 3. Backend on http://127.0.0.1:8080
+cd backend && ./mvnw spring-boot:run
+
+# 4. Dashboard on http://localhost:4200 (proxies /api to the backend)
+cd frontend && npm ci && npx ng serve
 ```
+
+Open the dashboard, click **Connect GitHub** in Settings ([docs/github-app.md](github-app.md)),
+install the app on a repository, allow it, and start a run. To try the dashboard without Docker,
+start the backend with `BOOTSHIFT_PIPELINE_MODE=fake`.
+
+## The sandbox
 
 Without a GitHub App, only public repositories can be cloned. Each build runs in a new container
 that:
@@ -111,7 +106,10 @@ Grafana is then on http://localhost:3000.
 | `BOOTSHIFT_BIND_ADDRESS` | `127.0.0.1` | There is no login until Phase 6; keep it on localhost |
 | `bootshift.runs.max-concurrent` | `2` | |
 | `bootshift.pipeline.fake-step-delay` | `800ms` | Pause between simulated stages |
-| `BOOTSHIFT_PIPELINE_MODE` | `fake` | `real` clones and runs the baseline in the sandbox |
+| `BOOTSHIFT_PIPELINE_MODE` | `real` | `fake` simulates every stage without Docker |
+| `BOOTSHIFT_HOME` | `~/.bootshift` | Where Connect GitHub saves the app's ID and private key |
+| `BOOTSHIFT_DASHBOARD_URL` | unset | The dashboard's address as the browser sees it; needed for Connect GitHub when it is not on localhost |
+| `GITHUB_APP_ID` / `GITHUB_APP_SLUG` / `GITHUB_APP_PRIVATE_KEY_PATH` | unset | A hand-made GitHub App; wins over Connect GitHub |
 | `BOOTSHIFT_WORKSPACE` | `${java.io.tmpdir}/bootshift` | Working copies and build logs. Keep it out of synced folders |
 | `BOOTSHIFT_SANDBOX_IMAGE` | `bootshift-sandbox:dev` | |
 | `bootshift.sandbox.*` | see `application.yaml` | Memory, CPUs, process limit, timeout, network, proxy URL |
